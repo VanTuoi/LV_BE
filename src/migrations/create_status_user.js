@@ -10,7 +10,9 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       SU_Describe: {
-        type: Sequelize.STRING(50)
+        allowNull: false,
+        type: Sequelize.ENUM('Normal', 'Lock'),
+        type: Sequelize.STRING
       },
       U_Id: {
         type: Sequelize.INTEGER

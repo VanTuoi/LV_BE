@@ -1,34 +1,33 @@
 'use strict';
 const {
-  Model
+  Model, INTEGER
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Status_User extends Model {
+  class Status_Reserve_Ticket extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      Status_User.belongsTo(models.User, {
-        foreignKey: 'U_Id'
-      })
+      Status_Reserve_Ticket.belongsTo(models.Reserve_Ticket, {
+        foreignKey: 'CS_Id'
+      });
     }
   }
-  Status_User.init({
-    SU_Id: {
+  Status_Reserve_Ticket.init({
+    SRT_Id: {
       type: DataTypes.INTEGER,
       primaryKey: true
     },
-    SU_Describe: {
-      type: DataTypes.ENUM('Normal', 'Lock'),
+    SRT_Describe: {
+      type: DataTypes.ENUM('Normal', 'Has Arrived', 'Late'),
       allowNull: false
     },
-    U_Id: DataTypes.INTEGER,
+    CS_Id: DataTypes.INTEGER,
   }, {
     sequelize,
-    modelName: 'Status_User',
+    modelName: 'Status_Reserve_Ticket',
   });
-
-  return Status_User;
+  return Status_Reserve_Ticket;
 };

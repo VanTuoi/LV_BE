@@ -2,17 +2,18 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Favorites_List', {
-      FL_Id: {
+    await queryInterface.createTable('Tags', {
+      T_Id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      CS_Id: {
-        type: Sequelize.INTEGER
+      T_Name: {
+        allowNull: false,
+        type: Sequelize.STRING(50)
       },
-      U_Id: {
+      CS_ID: {
         type: Sequelize.INTEGER
       },
       createdAt: {
@@ -26,6 +27,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Favorites_List');
+    await queryInterface.dropTable('Tags');
   }
 };

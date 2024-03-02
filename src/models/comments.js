@@ -3,33 +3,43 @@ const {
   Model, INTEGER
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Reserve_Ticket extends Model {
+  class Comments extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      Reserve_Ticket.belongsTo(models.User, {
+      Comments.belongsTo(models.User, {
         foreignKey: 'U_Id'
       });
-      Reserve_Ticket.belongsTo(models.Coffee_Store, {
+      Comments.belongsTo(models.Coffee_Store, {
         foreignKey: 'CS_Id'
       });
     }
   }
-  Reserve_Ticket.init({
-    RS_Id: {
+  Comments.init({
+    C_Id: {
       type: DataTypes.INTEGER,
       primaryKey: true
     },
-    RT_DateTimeArrival: DataTypes.DATE,
-    RT_NumberOfParticipants: DataTypes.INTEGER,
+    C_Details: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        len: [1, 200]
+      }
+    },
+    C_StartNumber: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
+    C_DateTimeComments: DataTypes.DATE,
     U_Id: DataTypes.INTEGER,
     CS_Id: DataTypes.INTEGER,
   }, {
     sequelize,
-    modelName: 'Reserve_Ticket',
+    modelName: 'Comments',
   });
-  return Reserve_Ticket;
+  return Comments;
 };

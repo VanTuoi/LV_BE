@@ -4,16 +4,18 @@ const {
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
+
     static associate(models) {
       User.hasMany(models.Status_User, {
         foreignKey: 'U_Id'
       });
       User.hasMany(models.Reserve_Ticket, {
+        foreignKey: 'U_Id',
+      });
+      User.hasMany(models.Comments, {
+        foreignKey: 'U_Id',
+      });
+      User.hasMany(models.Reports, {
         foreignKey: 'U_Id',
       });
       User.hasOne(models.Favorites_List, {
@@ -26,13 +28,37 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       primaryKey: true
     },
-    U_Name: DataTypes.STRING,
-    U_Password: DataTypes.STRING,
-    U_PhoneNumber: DataTypes.STRING,
-    U_Gender: DataTypes.BOOLEAN,
-    U_Birthday: DataTypes.INTEGER,
-    U_DateOpening: DataTypes.INTEGER,
-    U_PrestigeScore: DataTypes.INTEGER,
+    U_Name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        len: [1, 50]
+      }
+    },
+    U_Password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        len: [8, 20]
+      }
+    },
+    U_PhoneNumber: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        len: [10, 10]
+      }
+    },
+    U_Gender: {
+      type: DataTypes.ENUM('M', 'F', 'O'),
+      allowNull: false
+    },
+    U_Birthday: DataTypes.DATE,
+    U_DateOpening: DataTypes.DATE,
+    U_PrestigeScore: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
+    },
   }, {
     sequelize,
     modelName: 'User',

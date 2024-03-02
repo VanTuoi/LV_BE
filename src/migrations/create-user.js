@@ -11,16 +11,20 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       U_Name: {
-        type: Sequelize.STRING
+        allowNull: false,
+        type: Sequelize.STRING(50)
       },
       U_Password: {
-        type: Sequelize.STRING
+        allowNull: false,
+        type: Sequelize.STRING(20)
       },
       U_PhoneNumber: {
-        type: Sequelize.STRING
+        allowNull: false,
+        type: Sequelize.STRING(10)
       },
       U_Gender: {
-        type: Sequelize.BOOLEAN
+        type: Sequelize.ENUM('M', 'F', 'O'),
+        allowNull: false
       },
       U_Birthday: {
         type: Sequelize.DATE
@@ -29,7 +33,8 @@ module.exports = {
         type: Sequelize.DATE
       },
       U_PrestigeScore: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
+        defaultValue: 0
       },
       createdAt: {
         allowNull: false,

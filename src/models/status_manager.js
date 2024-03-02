@@ -3,30 +3,32 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Table_Booking_Schedule extends Model {
+  class Status_Manager extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      Table_Booking_Schedule.hasMany(models.Reserve_Ticket, {
-        foreignKey: 'TBS_Id'
-      })
-      Table_Booking_Schedule.belongsTo(models.Beverage_Store, {
-        foreignKey: 'BS_Id'
+      Status_Manager.belongsTo(models.Manager, {
+        foreignKey: 'M_Id'
       })
     }
   }
-  Table_Booking_Schedule.init({
-    TBS_Id: {
+  Status_Manager.init({
+    SM_Id: {
       type: DataTypes.INTEGER,
       primaryKey: true
     },
-    BS_Id: DataTypes.STRING,
+    SM_Describe: {
+      type: DataTypes.ENUM('Normal', 'Lock'),
+      allowNull: false
+    },
+    M_Id: DataTypes.INTEGER,
   }, {
     sequelize,
-    modelName: 'Table_Booking_Schedule',
+    modelName: 'Status_Manager',
   });
-  return Table_Booking_Schedule;
+
+  return Status_Manager;
 };

@@ -3,24 +3,30 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Activity_Schedule extends Model {
+  class Tags extends Model {
 
     static associate(models) {
-      Activity_Schedule.belongsTo(models.Coffee_Store, {
+      Tags.belongsTo(models.Coffee_Store, {
         foreignKey: 'CS_Id',
       })
     }
   }
-  Activity_Schedule.init({
-    AS_Id: {
+  Tags.init({
+    T_Id: {
       type: DataTypes.INTEGER,
       primaryKey: true
     },
-    AS_Holiday: DataTypes.DATE,
+    T_Name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        len: [1, 50]
+      }
+    },
     CS_Id: DataTypes.INTEGER,
   }, {
     sequelize,
-    modelName: 'Activity_Schedule',
+    modelName: 'Tags',
   });
-  return Activity_Schedule;
+  return Tags;
 };

@@ -16,7 +16,7 @@ let FindBokingScheduleToMonth = async (month) => {
 
         const newRecord = await db.Reserve_Ticket.findAll({
             where: {
-                RT_BookingDate: {
+                RT_DateTimeArrival: {
                     [Op.between]: [startDate, endDate]
                 }
             },
@@ -24,7 +24,7 @@ let FindBokingScheduleToMonth = async (month) => {
             include: [{
                 model: db.Table_Booking_Schedule,
                 include: [{
-                    model: db.Beverage_Store,
+                    model: db.Coffee_Store,
                     attributes: ['BS_Name']
                 }],
                 attributes: []
@@ -63,20 +63,20 @@ let getHoliday = async (month) => {
         return [];
     }
 }
-let setVacationListServices = async (AS_Holiday, BS_Id) => {
+let setVacationListServices = async (AS_Holiday, CS_Id) => {
     try {
         const maxTimeDifference = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
 
         // Find the last booking time
-        const lastBookingTime = await db.Reserve_Ticket.max('RT_BookingDate');
+        const lastBookingTime = await db.Reserve_Ticket.max('RT_DateTimeArrival');
 
         // Check condition: New booking time must be at least 2 hours later than the last booking time and not earlier than the current time
         if (true) {
-            // Check if the combination of AS_Holiday and BS_Id already exists in the database
+            // Check if the combination of AS_Holiday and CS_Id already exists in the database
             const existingRecord = await db.Activity_Schedule.findOne({
                 where: {
                     AS_Holiday: AS_Holiday,
-                    BS_Id: BS_Id
+                    CS_Id: CS_Id
                 }
             });
 
@@ -87,7 +87,7 @@ let setVacationListServices = async (AS_Holiday, BS_Id) => {
                 // Create a new record if condition is met
                 const newRecord = await db.Activity_Schedule.create({
                     AS_Holiday: AS_Holiday,
-                    BS_Id: BS_Id
+                    CS_Id: CS_Id
                 });
                 return '0'; // Return code for success
             }

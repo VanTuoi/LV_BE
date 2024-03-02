@@ -10,10 +10,10 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       AS_Holiday: {
-        type: Sequelize.STRING
+        type: Sequelize.DATE
       },
-      BS_Id: {
-        type: Sequelize.STRING
+      CS_Id: {
+        type: Sequelize.INTEGER
       },
       createdAt: {
         allowNull: false,

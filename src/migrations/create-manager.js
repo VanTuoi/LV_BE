@@ -1,25 +1,33 @@
 'use strict';
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Reserve_Ticket', {
-      RS_Id: {
+    await queryInterface.createTable('Manager', {
+      M_Id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      RT_DateTimeArrival: {
+      M_Name: {
+        type: Sequelize.STRING(50)
+      },
+      M_Password: {
+        type: Sequelize.STRING(20)
+      },
+      M_PhoneNumber: {
+        type: Sequelize.STRING(10)
+      },
+      M_Gender: {
+        type: Sequelize.ENUM('M', 'F', 'O'),
+        allowNull: false
+      },
+      M_Birthday: {
         type: Sequelize.DATE
       },
-      RT_NumberOfParticipants: {
-        type: Sequelize.INTEGER
-      },
-      U_Id: {
-        type: Sequelize.INTEGER
-      },
-      CS_Id: {
-        type: Sequelize.INTEGER
+      M_DateOpening: {
+        type: Sequelize.DATE
       },
       createdAt: {
         allowNull: false,
@@ -32,6 +40,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Reserve_Ticket');
+    await queryInterface.dropTable('Manager');
   }
 };

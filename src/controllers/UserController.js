@@ -4,10 +4,10 @@ const UserServices = require('../services/UserServices');
 // ----------------------------------------Booking ---------------------------------------------------------//
 const checkTimeABooking = async (req, res) => {
     try {
-        let bookingDate = +req.body.RT_BookingDate;
+        let bookingDate = +req.body.RT_DateTimeArrival;
         let userID = +req.body.U_Id
-        let storeID = +req.body.TBS_Id
-        console.log('[1:', req.body.RT_BookingDate, req.body.U_Id, req.body.TBS_Id, ']');
+        let storeID = +req.body.TCS_Id
+        console.log('[1:', req.body.RT_DateTimeArrival, req.body.U_Id, req.body.TCS_Id, ']');
 
         if (bookingDate && userID && storeID) {
             const isValidBookingTime = await UserServices.checkBookingCondition(bookingDate, userID, storeID);
@@ -36,11 +36,11 @@ const checkTimeABooking = async (req, res) => {
 }
 const CreateABooking = async (req, res) => {
     try {
-        console.log('[1:', req.body.RT_BookingDate, req.body.RT_NumberOfParticipants, req.body.U_Id, req.body.TBS_Id, ']');
+        console.log('[1:', req.body.RT_DateTimeArrival, req.body.RT_NumberOfParticipants, req.body.U_Id, req.body.CS_Id, ']');
 
-        let bookingDate = +req.body.RT_BookingDate;
+        let bookingDate = +req.body.RT_DateTimeArrival;
         let userID = +req.body.U_Id
-        let storeID = +req.body.TBS_Id
+        let storeID = +req.body.CS_Id
         let numberOfParticipants = +req.body.RT_NumberOfParticipants
 
         if (bookingDate && userID && storeID && numberOfParticipants) {
@@ -54,7 +54,7 @@ const CreateABooking = async (req, res) => {
                 if (newRecord) {
 
                     const ID_lastBokking = await UserServices.findLastBookingId(userID, storeID);
-                    const qr = await UserServices.CreateAQrCode({ RT_Id: ID_lastBokking });
+                    const qr = await UserServices.CreateAQrCode({ CS_Id: ID_lastBokking });
 
                     return res.status(200).send({
                         errorCode: '0',

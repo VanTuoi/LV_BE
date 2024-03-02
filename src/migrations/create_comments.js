@@ -2,23 +2,28 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Beverage_Store', {
-      BS_Id: {
+    await queryInterface.createTable('Comments', {
+      C_Id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      BS_Name: {
-        type: Sequelize.STRING(50)
-      },
-      BS_Location: {
+      C_Details: {
+        allowNull: false,
         type: Sequelize.STRING(200)
       },
-      BS_Detail: {
-        type: Sequelize.STRING(2000)
+      C_StarsNumber: {
+        allowNull: false,
+        type: Sequelize.INTEGER
       },
-      M_Id: {
+      C_DateTimeComments: {
+        type: Sequelize.DATE
+      },
+      U_Id: {
+        type: Sequelize.INTEGER
+      },
+      CS_Id: {
         type: Sequelize.INTEGER
       },
       createdAt: {
@@ -32,6 +37,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Beverage_Store');
+    await queryInterface.dropTable('Comments');
   }
 };

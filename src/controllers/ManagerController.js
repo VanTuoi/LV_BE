@@ -66,11 +66,11 @@ const ListHoliday = async (req, res) => {
 const CreateAHoliday = async (req, res) => {
     try {
 
-        if (req.body.AS_Holiday && req.body.BS_Id) {
+        if (req.body.AS_Holiday && req.body.CS_Id) {
 
             const date = new Date(+req.body.AS_Holiday)
 
-            let status = await managerServices.setVacationListServices(date, req.body.BS_Id)
+            let status = await managerServices.setVacationListServices(date, req.body.CS_Id)
             if (status === '0') {
                 return res.status(200).send('create a holiday succeed!')
             }

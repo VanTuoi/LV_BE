@@ -11,10 +11,10 @@ import { creatJWT } from '../middleware/Authentication'
 
 const findLastBookingId = async (userId, storeId) => {
     try {
-        const lastBookingId = await db.Reserve_Ticket.max('RT_Id', {
+        const lastBookingId = await db.Reserve_Ticket.max('CS_Id', {
             where: {
                 U_Id: userId,
-                TBS_Id: storeId
+                CS_Id: storeId
             }
         });
         console.log('Last booking ID:', lastBookingId);
@@ -34,8 +34,8 @@ const checkBookingCondition = async (bookingTime, userId, storeId) => {
         const bookingCount = await db.Reserve_Ticket.count({
             where: {
                 U_Id: userId,
-                TBS_Id: storeId,
-                RT_BookingDate: {
+                CS_Id: storeId,
+                RT_DateTimeArrival: {
                     [Op.between]: [startTime, endTime]
                 }
             }
@@ -52,10 +52,10 @@ const checkBookingCondition = async (bookingTime, userId, storeId) => {
 const createBookingRecord = async (bookingDate, numberOfParticipants, userId, storeId) => {
     try {
         const newRecord = await db.Reserve_Ticket.create({
-            RT_BookingDate: bookingDate,
+            RT_DateTimeArrival: bookingDate,
             RT_NumberOfParticipants: numberOfParticipants,
             U_Id: userId,
-            TBS_Id: storeId
+            CS_Id: storeId
         });
         return newRecord;
     } catch (error) {
