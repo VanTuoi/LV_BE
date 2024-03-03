@@ -1,5 +1,5 @@
 import express from "express";
-const { } = require('../controllers/AdminController');
+const { } = require('../controllers/admin-controller');
 
 // Tạo các hàm initWebRoutes riêng cho từng nhóm route
 function initAdminRoutes() {

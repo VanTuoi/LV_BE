@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       Status_Reserve_Ticket.belongsTo(models.Reserve_Ticket, {
-        foreignKey: 'CS_Id'
+        foreignKey: 'RT_Id'
       });
     }
   }
@@ -21,10 +21,10 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true
     },
     SRT_Describe: {
-      type: DataTypes.ENUM('Normal', 'Has Arrived', 'Late'),
+      type: DataTypes.ENUM('Waiting', 'Has Arrived', 'Late'),
       allowNull: false
     },
-    CS_Id: DataTypes.INTEGER,
+    RT_Id: DataTypes.INTEGER,
   }, {
     sequelize,
     modelName: 'Status_Reserve_Ticket',

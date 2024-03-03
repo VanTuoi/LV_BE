@@ -48,7 +48,7 @@ let getHoliday = async (month) => {
         endDate.setMonth(startDate.getMonth() + 1);
         endDate.setDate(0);     // ngày kết thúc của tháng
 
-        const listholiday = await db.Activity_Schedule.findAll({
+        const listHoliday = await db.Activity_Schedule.findAll({
             where: {
                 AS_Holiday: {
                     [Op.between]: [startDate, endDate]
@@ -57,7 +57,7 @@ let getHoliday = async (month) => {
             attributes: ['AS_Holiday']
         });
 
-        return listholiday;
+        return listHoliday;
     } catch (error) {
         console.error('Error getting vacation list:', error);
         return [];
@@ -97,7 +97,7 @@ let setVacationListServices = async (AS_Holiday, CS_Id) => {
             return '1'; // Return code for invalid booking
         }
     } catch (error) {
-        console.error('Error creating or checking Activity_Schedule record:', error);
+        console.error('Error creating or checkIng Activity_Schedule record:', error);
     }
 }
 

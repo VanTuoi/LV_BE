@@ -3,11 +3,42 @@ const QRCode = require('qrcode')
 const bcrypt = require('bcrypt');
 
 import db from "../models/index";
-import { creatJWT } from '../middleware/Authentication'
+import { creatJWT } from '../middleware/authentication'
 
 
 
 // ----------------------------------------Booking ---------------------------------------------------------//
+const createStatusBooking = async (Reserve_Ticket_ID, status) => {
+    try {
+        const newRecord = await db.Status_Reserve_Ticket.create({
+            RT_Id: Reserve_Ticket_ID,
+            SRT_Describe: status,
+        });
+        return newRecord;
+    } catch (error) {
+        console.error('Error creating booking record:', error);
+        return null
+    }
+};
+const findLatestStatusByTicketId = async (Reserve_Ticket_ID) => {
+    try {
+        const latestStatusRecord = await db.Status_Reserve_Ticket.findOne({
+            where: { RT_Id: Reserve_Ticket_ID },
+            order: [['createdAt', 'DESC']] // Sắp xếp giảm dần dựa vào trường createdAt
+        });
+
+        if (!latestStatusRecord) {
+            console.log('No status found for the given ticket ID');
+            return null;
+        }
+
+        return latestStatusRecord;
+    } catch (error) {
+        console.error('Error finding the latest status record:', error);
+        return null;
+    }
+};
+
 
 const findLastBookingId = async (userId, storeId) => {
     try {
@@ -44,7 +75,7 @@ const checkBookingCondition = async (bookingTime, userId, storeId) => {
         // Trả về true nếu không có đặt bàn nào trong khoảng thời gian đó, ngược lại trả về false
         return bookingCount === 0;
     } catch (error) {
-        console.error('Error checking booking condition:', error);
+        console.error('Error checkIng booking condition:', error);
         throw error;
     }
 };
@@ -64,7 +95,7 @@ const createBookingRecord = async (bookingDate, numberOfParticipants, userId, st
     }
 };
 
-const CreateAQrCode = (data) => {
+const createAQrCode = (data) => {
     return new Promise((resolve, reject) => {
         let stringdata = JSON.stringify(data);
 
@@ -91,7 +122,6 @@ const CreateAQrCode = (data) => {
         });
     });
 };
-
 
 
 // ------------------------------------------------- Register ----------------------------------------//
@@ -257,5 +287,7 @@ let login = async (data) => {
 
 module.exports = {
     getUsers, createUser, registerUser, login,
-    CreateAQrCode, createBookingRecord, checkBookingCondition, findLastBookingId
+    createAQrCode, createBookingRecord, checkBookingCondition, findLastBookingId,
+
+    createStatusBooking
 }

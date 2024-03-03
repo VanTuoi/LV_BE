@@ -1,4 +1,4 @@
-import userServices from '../services/UserServices'
+import userServices from '../services/user-services'
 import db from "../models/index";
 
 const register = async (req, res) => {

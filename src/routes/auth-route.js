@@ -1,5 +1,5 @@
 import express from "express";
-const { login, register } = require('../controllers/AuthenticationController');
+const { login, register } = require('../controllers/authentication-controller');
 
 // Tạo các hàm initWebRoutes riêng cho từng nhóm route
 function initAuthRoutes() {

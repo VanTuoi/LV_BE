@@ -2,19 +2,18 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Status_Reserve_Ticket', {
-      SRT_Id: {
+    await queryInterface.createTable('Status_Manager', {
+      SM_Id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      SRT_Describe: {
+      SM_Describe: {
         allowNull: false,
-        type: Sequelize.ENUM('Normal', 'Has Arrived', 'Late'),
-        type: Sequelize.STRING
+        type: Sequelize.ENUM('Normal', 'Lock'),
       },
-      CS_Id: {
+      M_Id: {
         type: Sequelize.INTEGER
       },
       createdAt: {
@@ -28,6 +27,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Status_Reserve_Ticket');
+    await queryInterface.dropTable('Status_Manager');
   }
 };

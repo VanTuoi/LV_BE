@@ -1,7 +1,11 @@
-const UserServices = require('../services/UserServices');
+const userServices = require('../services/user-services');
 
 
 // ----------------------------------------Booking ---------------------------------------------------------//
+const testAPI = async (req, res) => {
+    let check = await userServices.createStatusBooking('1', 'Has Arrived')
+    return res.status(200).send({ check })
+}
 const checkTimeABooking = async (req, res) => {
     try {
         let bookingDate = +req.body.RT_DateTimeArrival;
@@ -10,7 +14,7 @@ const checkTimeABooking = async (req, res) => {
         console.log('[1:', req.body.RT_DateTimeArrival, req.body.U_Id, req.body.TCS_Id, ']');
 
         if (bookingDate && userID && storeID) {
-            const isValidBookingTime = await UserServices.checkBookingCondition(bookingDate, userID, storeID);
+            const isValidBookingTime = await userServices.checkBookingCondition(bookingDate, userID, storeID);
             return res.status(200).send({
                 errorCode: '0',
                 errorMessage: 'Tìm thông tin đặt bàn thành công',
@@ -34,9 +38,8 @@ const checkTimeABooking = async (req, res) => {
         });
     }
 }
-const CreateABooking = async (req, res) => {
+const createABooking = async (req, res) => {
     try {
-        console.log('[1:', req.body.RT_DateTimeArrival, req.body.RT_NumberOfParticipants, req.body.U_Id, req.body.CS_Id, ']');
 
         let bookingDate = +req.body.RT_DateTimeArrival;
         let userID = +req.body.U_Id
@@ -45,16 +48,19 @@ const CreateABooking = async (req, res) => {
 
         if (bookingDate && userID && storeID && numberOfParticipants) {
 
-            const isValidBookingTime = await UserServices.checkBookingCondition(bookingDate, userID, storeID);
+            const isValidBookingTime = await userServices.checkBookingCondition(bookingDate, userID, storeID);
 
             if (isValidBookingTime) {
 
-                const newRecord = await UserServices.createBookingRecord(bookingDate, numberOfParticipants, userID, storeID);
+                const newRecord = await userServices.createBookingRecord(bookingDate, numberOfParticipants, userID, storeID);
 
                 if (newRecord) {
 
-                    const ID_lastBokking = await UserServices.findLastBookingId(userID, storeID);
-                    const qr = await UserServices.CreateAQrCode({ CS_Id: ID_lastBokking });
+                    const ID_lastBokking = await userServices.findLastBookingId(userID, storeID);
+
+                    userServices.createStatusBooking(ID_lastBokking, 'Waiting')
+
+                    const qr = await userServices.createAQrCode({ CS_Id: ID_lastBokking });
 
                     return res.status(200).send({
                         errorCode: '0',
@@ -96,7 +102,7 @@ const CreateABooking = async (req, res) => {
     }
 }
 
-const CreateAccount = async (req, res) => {
+const createAccount = async (req, res) => {
     let userId = req.query.id;
     console.log('run user id', req.query);
     if (userId != null) {
@@ -114,5 +120,5 @@ const CreateAccount = async (req, res) => {
 
 
 module.exports = {
-    CreateAccount, CreateABooking, checkTimeABooking
+    createAccount, createABooking, checkTimeABooking, testAPI
 }

@@ -16,10 +16,13 @@ module.exports = (sequelize, DataTypes) => {
       Reserve_Ticket.belongsTo(models.Coffee_Store, {
         foreignKey: 'CS_Id'
       });
+      Reserve_Ticket.hasMany(models.Status_Reserve_Ticket, {
+        foreignKey: 'RT_Id'
+      });
     }
   }
   Reserve_Ticket.init({
-    RS_Id: {
+    RT_Id: {
       type: DataTypes.INTEGER,
       primaryKey: true
     },

@@ -2,10 +2,10 @@
 import express from "express";
 
 // In the project
-import initAuthRoutes from './AuthRoute';
-import initUserRoutes from './UserRoute';
-import initManagerRoutes from './ManagerRoute';
-import initAdminRoutes from './AdminRoute';
+import initAuthRoutes from './auth-route';
+import initUserRoutes from './user-route';
+import initManagerRoutes from './manager-route';
+import initAdminRoutes from './admin-route';
 
 let initWebRoutes = (app) => {
     // Sử dụng các hàm initWebRoutes đã tạo

@@ -1,11 +1,12 @@
-import managerServices from '../services/ManagerServices'
+import managerServices from '../services/manager-services'
+import userServices from '../services/user-services'
 import db from "../models/index";
 
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-const ScheduleBooking = async (req, res) => {
+const scheduleBooking = async (req, res) => {
     try {
         await delay(200)
 
@@ -35,7 +36,7 @@ const ScheduleBooking = async (req, res) => {
     }
 }
 
-const ListHoliday = async (req, res) => {
+const listHoliday = async (req, res) => {
     try {
         const month = req.query.month
 
@@ -63,7 +64,7 @@ const ListHoliday = async (req, res) => {
     }
 }
 
-const CreateAHoliday = async (req, res) => {
+const createAHoliday = async (req, res) => {
     try {
 
         if (req.body.AS_Holiday && req.body.CS_Id) {
@@ -86,7 +87,70 @@ const CreateAHoliday = async (req, res) => {
         return res.status(500).send('Error from sever')
     }
 }
+const checkIn = async (req, res) => {
+    try {
+
+        let RT_Id = +req.body.RT_Id;
+
+        if (RT_Id) {
+
+            const isValidBookingTime = await userServices.checkBookingCondition(bookingDate, userID, storeID);
+
+            if (isValidBookingTime) {
+
+                const newRecord = await userServices.createBookingRecord(bookingDate, numberOfParticipants, userID, storeID);
+
+                if (newRecord) {
+
+                    const ID_lastBokking = await userServices.findLastBookingId(userID, storeID);
+
+                    userServices.createStatusBooking(ID_lastBokking, 'Waiting')
+
+                    const qr = await userServices.createAQrCode({ CS_Id: ID_lastBokking });
+
+                    return res.status(200).send({
+                        errorCode: '0',
+                        errorMessage: 'Bạn đã đặt bàn thành công',
+                        data: qr,
+                    });
+                }
+                else {
+                    return res.status(200).send({
+                        errorCode: '-1',
+                        errorMessage: 'Đặt bàn không thành công',
+                        data: null
+                    });
+                }
+            } else {
+                console.log('Bạn đã đặt 1 bàn đã đặt gần thời gian đó');
+
+                return res.status(200).send({
+                    errorCode: '-1',
+                    errorMessage: 'Bạn đã đặt 1 bàn đã đặt gần thời gian đó',
+                    data: null
+                });
+            }
+        } else {
+            return res.status(201).send({
+                errorCode: '-1',
+                errorMessage: 'Dữ liệu check in không đủ',
+                data: null
+            });
+        }
+    } catch (err) {
+        console.log('Error', err);
+
+        return res.status(500).send({
+            errorCode: '-5',
+            errorMessage: 'Lỗi từ server',
+            Data: null
+        });
+    }
+}
+
+
+
 
 module.exports = {
-    ScheduleBooking, ListHoliday, CreateAHoliday
+    scheduleBooking, listHoliday, createAHoliday, checkIn
 }
