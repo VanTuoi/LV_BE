@@ -1,5 +1,5 @@
 import express from "express";
-const { scheduleBooking, listHoliday, createAHoliday } = require('../controllers/manager-controller');
+const { scheduleBooking, listHoliday, createAHoliday, checkIn } = require('../controllers/manager-controller');
 
 // Tạo các hàm initWebRoutes riêng cho từng nhóm route
 function initManagerRoutes() {
@@ -7,6 +7,7 @@ function initManagerRoutes() {
     router.get('/booking-schedule', scheduleBooking);
     router.get('/holiday', listHoliday);
     router.post('/holiday', createAHoliday);
+    router.post('/check-in', checkIn);
     return router;
 }
 export default initManagerRoutes

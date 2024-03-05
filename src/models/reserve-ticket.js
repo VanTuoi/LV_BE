@@ -28,6 +28,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     RT_DateTimeArrival: DataTypes.DATE,
     RT_NumberOfParticipants: DataTypes.INTEGER,
+    RT_Ip: DataTypes.STRING,
     U_Id: DataTypes.INTEGER,
     CS_Id: DataTypes.INTEGER,
   }, {

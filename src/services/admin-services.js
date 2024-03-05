@@ -1,5 +1,5 @@
 import db from "../models/index";
-import { creatJWT } from '../middleware/Authentication'
+import { creatJWT } from '../middleware/authentication'
 const bcrypt = require('bcrypt');
 
 let salt = bcrypt.genSaltSync(10);

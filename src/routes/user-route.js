@@ -5,7 +5,7 @@ const { createABooking, checkTimeABooking, testAPI } = require('../controllers/u
 function initUserRoutes() {
     let router = express.Router();
     router.post('/create-a-booking', createABooking);
-    router.post('/ckeck-time-a-booking', checkTimeABooking);
+    router.post('/check-time-a-booking', checkTimeABooking);
     router.post('/test', testAPI);
     return router;
 }

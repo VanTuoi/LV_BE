@@ -17,8 +17,12 @@ module.exports = {
         allowNull: false,
         type: Sequelize.INTEGER
       },
+      RT_Ip: {
+        allowNull: true,
+        type: Sequelize.STRING
+      },
       U_Id: {
-        allowNull: false,
+        allowNull: true,
         type: Sequelize.INTEGER
       },
       CS_Id: {

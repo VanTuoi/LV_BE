@@ -12,7 +12,7 @@ const scheduleBooking = async (req, res) => {
 
         const month = req.query.month
 
-        let listBooking = await managerServices.FindBokingScheduleToMonth(month)
+        let listBooking = await managerServices.findBokingScheduleToMonth(month)
 
         if (listBooking) {
             return res.status(200).json({
@@ -38,7 +38,7 @@ const scheduleBooking = async (req, res) => {
 
 const listHoliday = async (req, res) => {
     try {
-        const month = req.query.month
+        const month = req.query.AS_Holiday
 
         let listHoliday = await managerServices.getHoliday(month)
 
@@ -65,6 +65,8 @@ const listHoliday = async (req, res) => {
 }
 
 const createAHoliday = async (req, res) => {
+
+    console.log('', req.body.AS_Holiday, req.body.CS_Id);
     try {
 
         if (req.body.AS_Holiday && req.body.CS_Id) {
@@ -87,63 +89,75 @@ const createAHoliday = async (req, res) => {
         return res.status(500).send('Error from sever')
     }
 }
+
+//-------------------------------------------------check in--------------------------------------------//
+
 const checkIn = async (req, res) => {
-    try {
 
-        let RT_Id = +req.body.RT_Id;
+    let RT_Id = +req.body.RT_Id;
 
-        if (RT_Id) {
+    if (RT_Id) {
 
-            const isValidBookingTime = await userServices.checkBookingCondition(bookingDate, userID, storeID);
+        try {
 
-            if (isValidBookingTime) {
+            let timeDifferenceInMinutes = await userServices.checkTimeTicket(RT_Id)     // số phút lệch của phiếu so với hiện tại
+            let status = await userServices.findLatestStatusByTicketId(RT_Id)               // Trạng thái hiện tại của phiếu
 
-                const newRecord = await userServices.createBookingRecord(bookingDate, numberOfParticipants, userID, storeID);
+            if (status && timeDifferenceInMinutes) {
 
-                if (newRecord) {
+                let detail = await userServices.findBookingbyId(RT_Id)
 
-                    const ID_lastBokking = await userServices.findLastBookingId(userID, storeID);
-
-                    userServices.createStatusBooking(ID_lastBokking, 'Waiting')
-
-                    const qr = await userServices.createAQrCode({ CS_Id: ID_lastBokking });
-
+                if (timeDifferenceInMinutes < -15 || status == 'Late') {
+                    userServices.createStatusBooking(RT_Id, 'Late')
                     return res.status(200).send({
                         errorCode: '0',
-                        errorMessage: 'Bạn đã đặt bàn thành công',
-                        data: qr,
+                        errorMessage: 'Bạn đã trễ hẹn',
+                        data: detail,
                     });
                 }
-                else {
+                if (timeDifferenceInMinutes > 45 && status == 'Waiting') {
                     return res.status(200).send({
-                        errorCode: '-1',
-                        errorMessage: 'Đặt bàn không thành công',
-                        data: null
+                        errorCode: '0',
+                        errorMessage: 'Chưa đến hẹn',
+                        data: detail,
                     });
                 }
-            } else {
-                console.log('Bạn đã đặt 1 bàn đã đặt gần thời gian đó');
-
+                if ((timeDifferenceInMinutes >= -45 || timeDifferenceInMinutes <= 15) && status == 'Waiting') {
+                    userServices.createStatusBooking(RT_Id, 'Has Arrived')
+                    return res.status(200).send({
+                        errorCode: '0',
+                        errorMessage: 'Bạn đã check in thành công',
+                        data: detail,
+                    });
+                }
+                // console.log('', timeDifferenceInMinutes, status);
                 return res.status(200).send({
-                    errorCode: '-1',
-                    errorMessage: 'Bạn đã đặt 1 bàn đã đặt gần thời gian đó',
+                    errorCode: '0',
+                    errorMessage: 'Bạn đã check in rồi',
+                    data: detail,
+                });
+
+            } else {
+                return res.status(200).send({
+                    errorCode: '0',
+                    errorMessage: 'Không tìm thấy thông tin đặt bàn',
                     data: null
                 });
             }
-        } else {
-            return res.status(201).send({
-                errorCode: '-1',
-                errorMessage: 'Dữ liệu check in không đủ',
-                data: null
+
+        } catch (err) {
+            console.log('Error', err);
+            return res.status(500).send({
+                errorCode: '-5',
+                errorMessage: 'Lỗi từ server',
+                Data: null
             });
         }
-    } catch (err) {
-        console.log('Error', err);
-
-        return res.status(500).send({
-            errorCode: '-5',
-            errorMessage: 'Lỗi từ server',
-            Data: null
+    } else {
+        return res.status(201).send({
+            errorCode: '-1',
+            errorMessage: 'Dữ liệu check in không đủ',
+            data: null
         });
     }
 }

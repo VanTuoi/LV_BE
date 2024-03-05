@@ -6,7 +6,6 @@ import db from "../models/index";
 import { creatJWT } from '../middleware/authentication'
 
 
-
 // ----------------------------------------Booking ---------------------------------------------------------//
 const createStatusBooking = async (Reserve_Ticket_ID, status) => {
     try {
@@ -20,6 +19,27 @@ const createStatusBooking = async (Reserve_Ticket_ID, status) => {
         return null
     }
 };
+
+const checkTimeTicket = async (Reserve_Ticket_ID) => {
+    try {
+        let record = await findBookingbyId(Reserve_Ticket_ID)
+        if (record) {
+            let timeArrival = new Date(record.RT_DateTimeArrival)
+            const currentTime = new Date();
+            const timeDifference = timeArrival.getTime() - currentTime.getTime();
+            const timeDifferenceInMinutes = timeDifference / (1000 * 60);
+            // console.log('timeDifferenceInMinutes', timeDifferenceInMinutes);
+            return timeDifferenceInMinutes
+        } else {
+            return null
+        }
+
+    } catch (error) {
+        console.error('Error check time ticket:', error);
+        return null;
+    }
+}
+
 const findLatestStatusByTicketId = async (Reserve_Ticket_ID) => {
     try {
         const latestStatusRecord = await db.Status_Reserve_Ticket.findOne({
@@ -32,23 +52,51 @@ const findLatestStatusByTicketId = async (Reserve_Ticket_ID) => {
             return null;
         }
 
-        return latestStatusRecord;
+        return latestStatusRecord.dataValues.SRT_Describe;
     } catch (error) {
         console.error('Error finding the latest status record:', error);
         return null;
     }
 };
 
+const findBookingbyId = async (Id) => {
+    try {
+        const bookingbyId = await db.Reserve_Ticket.findOne({
+            where: {
+                RT_Id: Id,
+            }
+        });
+        // console.log('booking', bookingbyId);
+        return bookingbyId || null;
+    } catch (error) {
+        console.error('Error finding last booking', error);
+        throw error;
+    }
+};
+
+const findBookingbyIp = async (ip) => {
+    try {
+        const bookingField = await db.Reserve_Ticket.findOne({
+            where: {
+                RT_Ip: ip,
+            },
+        });
+        return bookingField ? bookingField.dataValues.RT_Id : null;
+    } catch (error) {
+        console.error('Error finding booking field by IP', error);
+        throw error;
+    }
+};
 
 const findLastBookingId = async (userId, storeId) => {
     try {
-        const lastBookingId = await db.Reserve_Ticket.max('CS_Id', {
+        const lastBookingId = await db.Reserve_Ticket.max('RT_Id', {
             where: {
                 U_Id: userId,
                 CS_Id: storeId
             }
         });
-        console.log('Last booking ID:', lastBookingId);
+        // console.log('Last booking ID:', lastBookingId);
         return lastBookingId || null;
     } catch (error) {
         console.error('Error finding last booking ID:', error);
@@ -58,8 +106,8 @@ const findLastBookingId = async (userId, storeId) => {
 
 const checkBookingCondition = async (bookingTime, userId, storeId) => {
     try {
-        const startTime = new Date(bookingTime - 2 * 60 * 60 * 100 + 60 * 1000); // Thời gian bắt đầu (bookingTime)
-        const endTime = new Date(bookingTime + 2 * 60 * 60 * 1000 - 60 * 1000); // Thời gian kết thúc (2 giờ sau bookingTime)
+        const startTime = new Date(bookingTime - (2 * 60 * 60 * 100 + 60 * 1000)); // Thời gian bắt đầu (bookingTime)
+        const endTime = new Date(bookingTime + (2 * 60 * 60 * 1000 - 60 * 1000)); // Thời gian kết thúc (2 giờ sau bookingTime)
 
         // Tìm xem có bất kỳ đặt bàn nào trong khoảng thời gian từ startTime đến endTime không
         const bookingCount = await db.Reserve_Ticket.count({
@@ -80,11 +128,12 @@ const checkBookingCondition = async (bookingTime, userId, storeId) => {
     }
 };
 
-const createBookingRecord = async (bookingDate, numberOfParticipants, userId, storeId) => {
+const createBookingRecord = async (bookingDate, numberOfParticipants, userIp, userId, storeId) => {
     try {
         const newRecord = await db.Reserve_Ticket.create({
             RT_DateTimeArrival: bookingDate,
             RT_NumberOfParticipants: numberOfParticipants,
+            RT_Ip: userIp,
             U_Id: userId,
             CS_Id: storeId
         });
@@ -289,5 +338,8 @@ module.exports = {
     getUsers, createUser, registerUser, login,
     createAQrCode, createBookingRecord, checkBookingCondition, findLastBookingId,
 
-    createStatusBooking
+    createStatusBooking, findLatestStatusByTicketId, findBookingbyId,
+
+    // No account
+    findBookingbyIp, checkTimeTicket
 }

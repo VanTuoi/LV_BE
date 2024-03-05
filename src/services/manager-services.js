@@ -4,9 +4,7 @@ const QRCode = require('qrcode')
 
 
 
-
-
-let FindBokingScheduleToMonth = async (month) => {
+let findBokingScheduleToMonth = async (month) => {
     try {
 
         const startDate = new Date(+month);
@@ -102,5 +100,5 @@ let setVacationListServices = async (AS_Holiday, CS_Id) => {
 }
 
 module.exports = {
-    FindBokingScheduleToMonth, getHoliday, setVacationListServices
+    findBokingScheduleToMonth, getHoliday, setVacationListServices
 }
