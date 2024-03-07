@@ -16,7 +16,7 @@ module.exports = {
       },
       U_Password: {
         allowNull: false,
-        type: Sequelize.STRING(20)
+        type: Sequelize.STRING(200)
       },
       U_PhoneNumber: {
         allowNull: false,

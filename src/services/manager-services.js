@@ -6,7 +6,6 @@ const QRCode = require('qrcode')
 
 let findBokingScheduleToMonth = async (month) => {
     try {
-
         const startDate = new Date(+month);
         startDate.setDate(1);
         const endDate = new Date(+month);

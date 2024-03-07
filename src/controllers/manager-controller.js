@@ -97,44 +97,43 @@ const checkIn = async (req, res) => {
     let RT_Id = +req.body.RT_Id;
 
     if (RT_Id) {
-
         try {
-
             let timeDifferenceInMinutes = await userServices.checkTimeTicket(RT_Id)     // số phút lệch của phiếu so với hiện tại
             let status = await userServices.findLatestStatusByTicketId(RT_Id)               // Trạng thái hiện tại của phiếu
+            let timeCheckIn = await userServices.findTimeCreateLatestStatusByTicketId(RT_Id)
 
             if (status && timeDifferenceInMinutes) {
 
                 let detail = await userServices.findBookingbyId(RT_Id)
 
                 if (timeDifferenceInMinutes < -15 || status == 'Late') {
-                    userServices.createStatusBooking(RT_Id, 'Late')
+                    let timeCreate = await userServices.createStatusBooking(RT_Id, 'Late')
                     return res.status(200).send({
                         errorCode: '0',
                         errorMessage: 'Bạn đã trễ hẹn',
-                        data: detail,
+                        data: { detail, timeCreate },
                     });
                 }
                 if (timeDifferenceInMinutes > 45 && status == 'Waiting') {
                     return res.status(200).send({
                         errorCode: '0',
                         errorMessage: 'Chưa đến hẹn',
-                        data: detail,
+                        data: { detail, timeCheckIn: null },
                     });
                 }
                 if ((timeDifferenceInMinutes >= -45 || timeDifferenceInMinutes <= 15) && status == 'Waiting') {
-                    userServices.createStatusBooking(RT_Id, 'Has Arrived')
+                    let timeCreate = await userServices.createStatusBooking(RT_Id, 'Has Arrived')
                     return res.status(200).send({
                         errorCode: '0',
                         errorMessage: 'Bạn đã check in thành công',
-                        data: detail,
+                        data: { detail, timeCreate },
                     });
                 }
                 // console.log('', timeDifferenceInMinutes, status);
                 return res.status(200).send({
                     errorCode: '0',
                     errorMessage: 'Bạn đã check in rồi',
-                    data: detail,
+                    data: { detail, timeCheckIn },
                 });
 
             } else {

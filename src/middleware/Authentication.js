@@ -1,51 +1,66 @@
 import jwt from 'jsonwebtoken';
+import db from "../models/index";
 
-const creatJWT = (email) => {
+const createJWT = (id) => {
+  const payload = {
+    data: {
+      U_Id: id
+    },
+  };
 
-  let payload = {
-    // data: user.id,
-    email: email
-  }
-
-  let key = process.env.JWT_SECRET
-
-  let token = null
+  const key = process.env.JWT_SECRET;
 
   try {
-    token = jwt.sign(payload, key)
-    console.log(token);
+    const token = jwt.sign(payload, key, { expiresIn: '2h' });
+    console.log('Generated token:', token);
+    return token;
   } catch (error) {
-    console.log(error);
+    console.error('Error generating JWT:', error);
+    return null; // Trả về null nếu có lỗi
   }
-  return token
 }
 
-// const verifyToken = (req, res, next) => {
-const verifyToken = (token) => {
+const verifyToken = async (req, res, next) => {
+  const key = process.env.JWT_SECRET;
+  const token = req.body.token || req.query.token || req.headers["x-access-token"];
 
-  let key = process.env.JWT_SECRET
+  if (!token) {
+    return res.status(401).json({
+      errorCode: '0',
+      errorMessage: 'Không tìm thấy token',
+      data: null
+    });
+  }
 
-  // const token = req.body.token || req.query.token || req.headers["x-access-token"];
-  // if (!token) {
-  //   return res.status(403).json({ message: "Cần có token để xác thực người dùng" });
-  // }
   try {
     const decoded = jwt.verify(token, key);
-    // const currentTimestamp = Math.floor(Date.now() / 1000); // Get current timestamp in seconds
-    // if (decoded.exp < currentTimestamp) {
-    //   return res.status(401).send("Token đã hết hạn");
-    // }
-    // req.user = decoded;
-    console.log('xac thuc', decoded);
+
+    // Xác nhận người dùng tồn tại trong DB
+    const user = await db.User.findOne({ where: { U_Id: decoded.data.U_Id } });
+    if (!user) {
+      return res.status(403).json({
+        errorCode: '2',
+        errorMessage: 'Bạn không có quyền truy cập chức năng này',
+        data: null
+      });
+    }
+
+    // Nếu người dùng tồn tại, gán thông tin decoded vào req và tiếp tục
+    req.user = decoded.data;
+    next();
+
   } catch (error) {
-    // return res.status(401).send("Token không hợp lệ");
-    console.log("Token không hợp lệ");
-
+    console.error("Có lỗi xảy ra khi xác thực Token người dùng", error);
+    res.status(401).json({
+      errorCode: '3',
+      errorMessage: 'Token không hợp lệ',
+      data: null
+    });
   }
+};
 
-  // return next();
-}
+
 
 module.exports = {
-  creatJWT, verifyToken
+  createJWT, verifyToken
 }

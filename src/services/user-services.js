@@ -13,7 +13,7 @@ const createStatusBooking = async (Reserve_Ticket_ID, status) => {
             RT_Id: Reserve_Ticket_ID,
             SRT_Describe: status,
         });
-        return newRecord;
+        return newRecord.updatedAt;
     } catch (error) {
         console.error('Error creating booking record:', error);
         return null
@@ -53,6 +53,24 @@ const findLatestStatusByTicketId = async (Reserve_Ticket_ID) => {
         }
 
         return latestStatusRecord.dataValues.SRT_Describe;
+    } catch (error) {
+        console.error('Error finding the latest status record:', error);
+        return null;
+    }
+};
+const findTimeCreateLatestStatusByTicketId = async (Reserve_Ticket_ID) => {
+    try {
+        const latestStatusRecord = await db.Status_Reserve_Ticket.findOne({
+            where: { RT_Id: Reserve_Ticket_ID },
+            order: [['createdAt', 'DESC']] // Sắp xếp giảm dần dựa vào trường createdAt
+        });
+        // console.log('latestStatusRecord', latestStatusRecord);
+        if (!latestStatusRecord) {
+            console.log('No status found for the given ticket ID');
+            return null;
+        }
+
+        return latestStatusRecord.dataValues.updatedAt;
     } catch (error) {
         console.error('Error finding the latest status record:', error);
         return null;
@@ -269,15 +287,7 @@ let registerUser = async (data) => {
         }
     }
 }
-const comparePassword = async (inputPassword, hashedPassword) => {
-    try {
-        const isMatch = await bcrypt.compare(inputPassword, hashedPassword);
-        return isMatch;
-    } catch (error) {
-        console.error('Error comparing passwords:', error);
-        throw error;
-    }
-};
+
 function delayOnServer(milliseconds) {
     return new Promise((resolve) => {
         setTimeout(() => {
@@ -285,61 +295,13 @@ function delayOnServer(milliseconds) {
         }, milliseconds);
     });
 }
-let login = async (data) => {
-    try {
-
-        let account = await db.User.findOne({
-            where: { email: data.email },
-        })
-        let jwt = null
-        if (!account) {
-            return {
-                // EM: 'Account does not exist',
-                EM: 'Không tìm thấy tài khoản !',
-                EC: 1,
-                DT: {
-                    jwt
-                },
-            }
-        } else {
-            let check = await comparePassword(data.password, account.password);
-            // let b = await delayOnServer(5000);                                      // test hàm delay
-            if (check) {
-                jwt = await creatJWT(data.email);
-                return {
-                    EM: 'login is success !',
-                    EC: 0,
-                    DT: {
-                        jwt
-                    },
-                }
-            } else {
-                return {
-                    // EM: 'incorrect password',
-                    EM: 'Mật khẩu không đúng !',
-                    EC: 2,
-                    DT: {
-                        jwt
-                    },
-                }
-            }
-        }
-    } catch (e) {
-        console.log(e)
-        return {
-            EM: 'Somthing wrongs in services',
-            EC: 2,
-            DT: '',
-        }
-    }
-}
 
 module.exports = {
-    getUsers, createUser, registerUser, login,
+    getUsers, createUser, registerUser,
     createAQrCode, createBookingRecord, checkBookingCondition, findLastBookingId,
 
     createStatusBooking, findLatestStatusByTicketId, findBookingbyId,
 
     // No account
-    findBookingbyIp, checkTimeTicket
+    findBookingbyIp, checkTimeTicket, findTimeCreateLatestStatusByTicketId
 }
