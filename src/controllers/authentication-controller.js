@@ -1,8 +1,9 @@
-import authenticationServices from '../services/authentication-services'
 
-import createResponse from '../helpers/responseHelper';
-import auth from '../middleware/authentication'
+// In the Project
 import db from "../models/index";
+import auth from '../middleware/authentication'
+import createResponse from '../helpers/responseHelper';
+import authenticationServices from '../services/authentication-services'
 
 const register = async (req, res) => {
     const { U_Name: name, U_Email: email, U_PhoneNumber: phone, U_Password: password } = req.body;
@@ -44,18 +45,20 @@ const login = async (req, res) => {
         if (!isPhoneExist) {
             return res.status(200).json(createResponse(1, 'Số điện thoại không tồn tại trong hệ thống'));
         } else {
-            const account = await authenticationServices.findPasswordOfUserByPhone(phone);
+            let account = await authenticationServices.findPasswordOfUserByPhone(phone);
 
             if (!account) {
-                return res.status(200).json(createResponse(3, 'Lỗi từ server: Không thể tìm tài khoản'));
+                return res.status(200).json(createResponse(3, 'Không thể tìm tài khoản'));
             }
             const isPasswordCorrect = await authenticationServices.comparePassword(password, account.U_Password);
 
             if (!isPasswordCorrect) {
                 return res.status(200).json(createResponse(2, 'Mật khẩu không chính xác'));
             }
+            account = await authenticationServices.findUserByPhone(phone)
             const jwtToken = await auth.createJWT(account.U_Id);
-            return res.status(200).json(createResponse(0, 'Đăng nhập thành công', { jwtToken, account }));
+            res.cookie("Jwt", jwtToken, { httpOnly: true, maxAge: 2 * 60 * 60 * 1000 })
+            return res.status(200).json(createResponse(0, 'Đăng nhập thành công', { account }));
         }
 
     } catch (error) {
@@ -70,14 +73,3 @@ export default login;
 module.exports = {
     register, login,
 }
-
-
-
-// let data = await userServices.login(req.body)
-// res.cookie("jwt", 'jwt = 123 from sever', { httpOnly: true, maxAge: 60 * 60 * 1000 })
-// console.log('run');
-// return res.json({
-//     EM: data.EM,
-//     EC: data.EC,
-//     DT: data.DT,
-// })

@@ -19,7 +19,7 @@ module.exports = {
       },
       CS_Detail: {
         allowNull: false,
-        type: Sequelize.STRING(2000)
+        type: Sequelize.STRING(20000)
       },
       CS_DateOpening: {
         type: Sequelize.DATE

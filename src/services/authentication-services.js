@@ -57,7 +57,7 @@ let findPasswordOfUserByPhone = async (phone) => {
             where: { U_PhoneNumber: phone },
             attributes: ['U_Password'],
         })
-        console.log('haveUser', haveUser);
+        // console.log('haveUser', haveUser);
         return haveUser ? haveUser : null
     } catch (e) {
         console.log(e)

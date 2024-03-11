@@ -42,29 +42,29 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       primaryKey: true
     },
-    BS_Name: {
+    CS_Name: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
         len: [1, 100]
       }
     },
-    BS_Location: {
+    CS_Location: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
         len: [1, 100]
       }
     },
-    BS_Detail: {
+    CS_Detail: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        len: [1, 2000]
+        len: [1, 20000]
       }
     },
-    BS_DateOpening: DataTypes.DATE,
-    M_Id: DataTypes.STRING,
+    CS_DateOpening: DataTypes.DATE,
+    M_Id: DataTypes.INTEGER,
   }, {
     sequelize,
     modelName: 'Coffee_Store',

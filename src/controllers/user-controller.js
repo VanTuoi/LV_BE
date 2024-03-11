@@ -1,151 +1,75 @@
 const userServices = require('../services/user-services');
-
+import createResponse from '../helpers/responseHelper';
 
 // ----------------------------------------Booking ---------------------------------------------------------//
 const testAPI = async (req, res) => {
     let check = await userServices.createStatusBooking('1', 'Has Arrived')
     return res.status(200).send({ check })
 }
+
 const checkTimeABooking = async (req, res) => {
     try {
-        let bookingDate = +req.body.RT_DateTimeArrival;
-        let userID = +req.body.U_Id
-        let storeID = +req.body.CS_Id
-        // console.log('[1:', req.body.RT_DateTimeArrival, req.body.U_Id, req.body.CS_Id, ']');
+        const { RT_DateTimeArrival: bookingDate, U_Id: userID, CS_Id: storeID } = req.body;
 
-        if (bookingDate && userID && storeID) {
-            const isValidBookingTime = await userServices.checkBookingCondition(bookingDate, userID, storeID);
-            return res.status(200).send({
-                errorCode: '0',
-                errorMessage: 'Tìm thông tin đặt bàn thành công',
-                data: isValidBookingTime,
-            });
-        } else {
-            return res.status(201).send({
-                errorCode: '-1',
-                errorMessage: 'Dữ liệu không không đủ',
-                data: null
-            });
+        if (!bookingDate || !userID || !storeID) {
+            return res.status(201).json(createResponse(-1, 'Dữ liệu không đủ', null));
         }
 
+        const isValidBookingTime = await userServices.checkBookingCondition(+bookingDate, +userID, +storeID);
+        return res.status(200).json(createResponse(0, 'Tìm thông tin đặt bàn thành công', isValidBookingTime));
+    } catch (error) {
+        console.error('Lỗi từ server:', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi từ server', null));
     }
-    catch (err) {
-        console.log('Error', err);
-        return res.status(500).send({
-            errorCode: '-5',
-            errorMessage: 'Lỗi từ server',
-            Data: null
-        });
-    }
-}
+};
+
 const createABooking = async (req, res) => {
     try {
+        const { RT_DateTimeArrival: bookingDate, U_Id: userID, CS_Id: storeID, RT_NumberOfParticipants: numberOfParticipants, RT_Ip: ip } = req.body;
 
-        let bookingDate = +req.body.RT_DateTimeArrival;
-        let userID = +req.body.U_Id
-        let storeID = +req.body.CS_Id
-        let numberOfParticipants = +req.body.RT_NumberOfParticipants
-        let ip = req.body.RT_Ip
-
+        if (!bookingDate || !storeID || !numberOfParticipants) {
+            return res.status(201).json(createResponse(-1, 'Dữ liệu phiếu đặt bàn không đủ', null));
+        }
 
         if (!userID && ip) {
-            const IdBooking = await userServices.findBookingbyIp(ip)
+            const IdBooking = await userServices.findBookingbyIp(ip);
             if (IdBooking) {
                 let status = await userServices.findLatestStatusByTicketId(IdBooking);
-                // console.log('status', status);
                 if (status === 'Waiting') {
-                    return res.status(200).send({
-                        errorCode: '0',
-                        errorMessage: 'Bạn đã đặt 1 bàn trước đó',
-                        data: null,
-                    });
+                    return res.status(200).json(createResponse(0, 'Bạn đã đặt 1 bàn trước đó', null));
                 }
             }
 
             const newRecord = await userServices.createBookingRecord(bookingDate, numberOfParticipants, ip, null, storeID);
-            // console.log('newRecord', newRecord);
             if (newRecord) {
-
                 const ID_lastBokking = await userServices.findBookingbyIp(ip);
-
-                userServices.createStatusBooking(ID_lastBokking, 'Waiting')
-
+                userServices.createStatusBooking(ID_lastBokking, 'Waiting');
                 const qr = await userServices.createAQrCode({ CS_Id: ID_lastBokking });
-
-                return res.status(200).send({
-                    errorCode: '0',
-                    errorMessage: 'Bạn đã đặt bàn thành công',
-                    data: qr,
-                });
-            }
-            else {
-                return res.status(200).send({
-                    errorCode: '-1',
-                    errorMessage: 'Đặt bàn không thành công',
-                    data: null
-                });
-            }
-
-        }
-        else {
-
-            if (bookingDate && userID && storeID && numberOfParticipants) {
-
-                const isValidBookingTime = await userServices.checkBookingCondition(bookingDate, userID, storeID);
-
-                if (isValidBookingTime) {
-
-                    const newRecord = await userServices.createBookingRecord(bookingDate, numberOfParticipants, null, userID, storeID);
-
-                    if (newRecord) {
-
-                        const ID_lastBokking = await userServices.findLastBookingId(userID, storeID);
-
-                        userServices.createStatusBooking(ID_lastBokking, 'Waiting')
-
-                        const qr = await userServices.createAQrCode({ CS_Id: ID_lastBokking });
-
-                        return res.status(200).send({
-                            errorCode: '0',
-                            errorMessage: 'Bạn đã đặt bàn thành công',
-                            data: qr,
-                        });
-                    }
-                    else {
-                        return res.status(200).send({
-                            errorCode: '-1',
-                            errorMessage: 'Đặt bàn không thành công',
-                            data: null
-                        });
-                    }
-                } else {
-                    console.log('Bạn đã đặt 1 bàn đã đặt gần thời gian đó');
-
-                    return res.status(200).send({
-                        errorCode: '-1',
-                        errorMessage: 'Bạn đã đặt 1 bàn đã đặt gần thời gian đó',
-                        data: null
-                    });
-                }
+                return res.status(200).json(createResponse(0, 'Bạn đã đặt bàn thành công', qr));
             } else {
-                return res.status(201).send({
-                    errorCode: '-1',
-                    errorMessage: 'Dữ liệu phiếu đặt bàn không đủ',
-                    data: null
-                });
+                return res.status(200).json(createResponse(-1, 'Đặt bàn không thành công', null));
             }
         }
 
-    } catch (err) {
-        console.log('Error', err);
-
-        return res.status(500).send({
-            errorCode: '-5',
-            errorMessage: 'Lỗi từ server',
-            Data: null
-        });
+        const isValidBookingTime = await userServices.checkBookingCondition(bookingDate, userID, storeID);
+        if (isValidBookingTime) {
+            const newRecord = await userServices.createBookingRecord(bookingDate, numberOfParticipants, null, userID, storeID);
+            if (newRecord) {
+                const ID_lastBokking = await userServices.findLastBookingId(userID, storeID);
+                userServices.createStatusBooking(ID_lastBokking, 'Waiting');
+                const qr = await userServices.createAQrCode({ CS_Id: ID_lastBokking });
+                return res.status(200).json(createResponse(0, 'Bạn đã đặt bàn thành công', qr));
+            } else {
+                return res.status(200).json(createResponse(-1, 'Đặt bàn không thành công', null));
+            }
+        } else {
+            return res.status(200).json(createResponse(-1, 'Bạn đã đặt 1 bàn đã đặt gần thời gian đó', null));
+        }
+    } catch (error) {
+        console.error('Lỗi từ server:', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi từ server', null));
     }
-}
+};
 
 const createAccount = async (req, res) => {
     let userId = req.query.id;

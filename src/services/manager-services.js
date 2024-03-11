@@ -2,8 +2,6 @@ import db from "../models/index";
 const { Op } = require('sequelize');
 const QRCode = require('qrcode')
 
-
-
 let findBokingScheduleToMonth = async (month) => {
     try {
         const startDate = new Date(+month);
@@ -98,6 +96,9 @@ let setVacationListServices = async (AS_Holiday, CS_Id) => {
     }
 }
 
+
+//---------------------------------------------------Manager coffee store------------------------------------------------------------//
+
 module.exports = {
-    findBokingScheduleToMonth, getHoliday, setVacationListServices
+    findBokingScheduleToMonth, getHoliday, setVacationListServices,
 }
