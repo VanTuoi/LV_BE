@@ -18,6 +18,9 @@ module.exports = (sequelize, DataTypes) => {
       Coffee_Store.hasMany(models.Tags, {
         foreignKey: 'CS_Id',
       })
+      Coffee_Store.hasMany(models.Services, {
+        foreignKey: 'CS_Id',
+      })
       Coffee_Store.hasMany(models.Comments, {
         foreignKey: 'CS_Id',
       })
@@ -63,7 +66,6 @@ module.exports = (sequelize, DataTypes) => {
         len: [1, 20000]
       }
     },
-    CS_DateOpening: DataTypes.DATE,
     M_Id: DataTypes.INTEGER,
   }, {
     sequelize,

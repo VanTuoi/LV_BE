@@ -54,7 +54,6 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     U_Birthday: DataTypes.DATE,
-    U_DateOpening: DataTypes.DATE,
     U_PrestigeScore: {
       type: DataTypes.INTEGER,
       defaultValue: 0

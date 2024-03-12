@@ -45,7 +45,6 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     M_Birthday: DataTypes.DATE,
-    M_DateOpening: DataTypes.DATE,
   }, {
     sequelize,
     modelName: 'Manager',

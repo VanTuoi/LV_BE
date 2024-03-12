@@ -26,9 +26,6 @@ module.exports = {
       M_Birthday: {
         type: Sequelize.DATE
       },
-      M_DateOpening: {
-        type: Sequelize.DATE
-      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE

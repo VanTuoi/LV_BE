@@ -1,134 +1,144 @@
 import db from "../models/index";
 
-
-const findCoffeeStorebyId = async (id) => {
+//-------------------------------------------- Tìm kiếm --------------------------------//
+const findCoffeeStoreById = async (id) => {
     try {
-        const newRecord = await db.Coffee_Store.findOne({
+        const coffeeStore = await db.Coffee_Store.findOne({
             where: { CS_Id: id },
             attributes: ['CS_Id', 'CS_Name', 'CS_Location'],
         });
-        return newRecord;
+        return coffeeStore;
     } catch (error) {
-        console.error('Error find details store coffee record:', error);
-        return null
-    }
-};
-
-const findDetailCoffeeStorebyIdManager = async (id) => {
-    try {
-        const newRecord = await db.Coffee_Store.findOne({
-            where: { M_Id: id },
-        });
-        if (newRecord) {
-            return newRecord.CS_Detail
-        }
-        return null
-    } catch (error) {
-        console.error('Error find store coffee record:', error);
-        return null
-    }
-};
-
-
-const findDetailCoffeeStorebyId = async (id) => {
-    try {
-        const newRecord = await db.Coffee_Store.findOne({
-            where: { CS_Id: id },
-        });
-        return newRecord;
-    } catch (error) {
-        console.error('Error find details store coffee record:', error);
-        return null
-    }
-};
-
-const findMenusCoffeeStorebyId = async (id) => {
-    try {
-        const newRecord = await db.Menus.findAll({
-            where: { CS_Id: id },
-        });
-        return newRecord;
-    } catch (error) {
-        console.error('Error find menus store coffee record:', error);
-        return null
-    }
-};
-
-const findTagsCoffeeStorebyId = async (id) => {
-    try {
-        const newRecord = await db.Coffee_Store.findOne({
-            where: { CS_Id: id },
-        });
-        return newRecord;
-    } catch (error) {
-        console.error('Error find tags store coffee record:', error);
-        return null
-    }
-};
-
-const findIdCoffeeStoreByIdManager = async (id) => {
-    try {
-        const newRecord = await db.Coffee_Store.findOne({
-            where: { M_Id: id },
-        });
-        if (newRecord) {
-            return newRecord.CS_Id
-        }
+        console.error('Error finding coffee store details:', error);
         return null;
-    } catch (error) {
-        console.error('Error find id store coffee by manager id:', error);
-        throw error;
     }
-}
+};
+
+const findCoffeeStoreDetailById = async (id) => {
+    try {
+        const coffeeStoreDetail = await db.Coffee_Store.findOne({
+            where: { CS_Id: id },
+            attributes: ['CS_Detail'],
+        });
+        return coffeeStoreDetail;
+    } catch (error) {
+        console.error('Error finding coffee store detail:', error);
+        return null;
+    }
+};
+
+const findMenusByCoffeeStoreId = async (id) => {
+    try {
+        const menus = await db.Menus.findAll({
+            where: { CS_Id: id },
+        });
+        return menus;
+    } catch (error) {
+        console.error('Error finding menus of coffee store:', error);
+        return null;
+    }
+};
+
+const findServicesByCoffeeStoreId = async (id) => {
+    try {
+        const services = await db.Services.findAll({
+            where: { CS_Id: id },
+        });
+        return services;
+    } catch (error) {
+        console.error('Error finding services of coffee store:', error);
+        return null;
+    }
+};
+
+const findTagsByCoffeeStoreId = async (id) => {
+    try {
+        const tags = await db.Tags.findOne({
+            where: { CS_Id: id },
+        });
+        return tags;
+    } catch (error) {
+        console.error('Error finding tags of coffee store:', error);
+        return null;
+    }
+};
+
+const findCoffeeStoreByIdManager = async (id) => {
+    try {
+        const coffeeStore = await db.Coffee_Store.findOne({
+            where: { M_Id: id },
+            include: [db.Menus, db.Services, db.Tags]
+        });
+        return coffeeStore || null;
+    } catch (error) {
+        console.error('Error finding coffee store record:', error);
+        return null;
+    }
+};
+
+const findCoffeeStoreIdByManagerId = async (managerId) => {
+    try {
+        const coffeeStore = await db.Coffee_Store.findOne({
+            where: { M_Id: managerId }
+        });
+        console.log('coffeeStore', coffeeStore);
+        return coffeeStore ? coffeeStore.CS_Id : null;
+    } catch (error) {
+        console.error('Error finding store ID by manager ID:', error);
+        return null;
+    }
+};
 
 
-const createCoffeeStoreRecord = async (manager_Id, name, location, detail) => {
+//----------------------------------------------- Tạo mới-----------------------------------------//
+
+const createCoffeeStore = async (id, name, location, detail) => {
     try {
         const newRecord = await db.Coffee_Store.create({
             CS_Name: name,
             CS_Location: location,
             CS_Detail: detail,
-            M_Id: manager_Id
+            M_Id: id
         });
         return newRecord;
-
-
     } catch (error) {
         console.error('Error creating store coffee record:', error);
         throw error;
     }
 };
 
-const createAMenu = async (name, price, store_Id) => {
+const createMenusFromList = async (store_Id, listMenus) => {
     try {
-        const newRecord = await db.Menus.create({
-            M_Name: name,
-            M_Price: price,
-            CS_Id: store_Id
-        });
-        if (newRecord) {
-            console.log('newRecord', newRecord);
-        }
-    } catch (error) {
-        console.error('Error create a menu item store coffee record:', error);
-        throw error;
-    }
-}
-
-const createListMenus = async (store_Id, listMenus) => {
-    try {
-
         for (const menu of listMenus) {
-            console.log(menu.M_Id, menu.M_Name, menu.M_Price);
-            createAMenu(menu.M_Name, menu.M_Price, store_Id);
+            await db.Menus.create({
+                M_Name: menu.M_Name,
+                M_Price: menu.M_Price,
+                CS_Id: store_Id
+            });
         }
         return true;
     } catch (error) {
-        console.error('Error create menu store coffee record:', error);
-        return false
+        console.error('Error creating menus for coffee store record:', error);
+        throw error;
     }
-}
+};
 
+const createServicesFromList = async (store_Id, listServices) => {
+    try {
+        for (const service of listServices) {
+            await db.Services.create({
+                S_Name: service.S_Name,
+                S_IsAvailable: service.S_IsAvailable === true,
+                S_Describe: service.S_Describe ? service.S_Describe : null,
+                CS_Id: store_Id
+            });
+        }
+        return true;
+    } catch (error) {
+        console.error('Error creating services for coffee store record:', error);
+        throw error;
+    }
+};
 
 const updateCoffeeStoreRecord = async (id, name, location, detail) => {
     try {
@@ -156,7 +166,18 @@ const updateCoffeeStoreRecord = async (id, name, location, detail) => {
 
 
 module.exports = {
-    createCoffeeStoreRecord, findDetailCoffeeStorebyId, updateCoffeeStoreRecord,
+    // Find
+    findCoffeeStoreById,
+    findCoffeeStoreDetailById,
+    findMenusByCoffeeStoreId,
+    findServicesByCoffeeStoreId,
+    findTagsByCoffeeStoreId,
+    findCoffeeStoreByIdManager,
+    findCoffeeStoreIdByManagerId,
+    // Create
+    createCoffeeStore,
+    createMenusFromList,
+    createServicesFromList,
 
-    findCoffeeStorebyId, findIdCoffeeStoreByIdManager, findDetailCoffeeStorebyIdManager, createListMenus, findMenusCoffeeStorebyId
+    updateCoffeeStoreRecord
 }

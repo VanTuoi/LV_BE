@@ -29,9 +29,6 @@ module.exports = {
       U_Birthday: {
         type: Sequelize.DATE
       },
-      U_DateOpening: {
-        type: Sequelize.DATE
-      },
       U_PrestigeScore: {
         type: Sequelize.INTEGER,
         defaultValue: 0
