@@ -81,7 +81,7 @@ const findCoffeeStoreIdByManagerId = async (managerId) => {
         const coffeeStore = await db.Coffee_Store.findOne({
             where: { M_Id: managerId }
         });
-        console.log('coffeeStore', coffeeStore);
+        console.log('find ID coffee', coffeeStore && coffeeStore.CS_Id);
         return coffeeStore ? coffeeStore.CS_Id : null;
     } catch (error) {
         console.error('Error finding store ID by manager ID:', error);
@@ -144,22 +144,80 @@ const updateCoffeeStoreRecord = async (id, name, location, detail) => {
     try {
         // Tìm cửa hàng cà phê bằng ID
         const storeToUpdate = await db.Coffee_Store.findByPk(id);
-
         if (!storeToUpdate) {
             throw new Error(`Store with id ${id} not found.`);
         }
-
-        // Cập nhật các thuộc tính của bản ghi
         storeToUpdate.CS_Name = name;
         storeToUpdate.CS_Location = location;
         storeToUpdate.CS_Detail = detail;
-
-        // Lưu thay đổi vào cơ sở dữ liệu
         await storeToUpdate.save();
 
-        return storeToUpdate; // Trả về bản ghi sau khi được cập nhật
+        return storeToUpdate;
     } catch (error) {
         console.error('Error updating coffee store record:', error);
+        throw error;
+    }
+};
+
+const updateMenusCoffeeStore = async (id, updatedMenusList) => {
+    try {
+        for (const updatedMenu of updatedMenusList) {
+            // Kiểm tra nếu M_Id bắt đầu bằng 'D', thực hiện xóa menu
+            if (updatedMenu.M_Id.toString().startsWith('D')) {
+                const menuIdToDelete = updatedMenu.M_Id.substring(2); // Lấy phần số của ID
+                await db.Menus.destroy({
+                    where: { M_Id: menuIdToDelete, CS_Id: id }
+                });
+                console.log(`Menu with ID ${menuIdToDelete} has been deleted.`);
+            }
+            // Kiểm tra nếu M_Id bắt đầu bằng 'N', thực hiện thêm mới menu
+            else if (updatedMenu.M_Id.toString().startsWith('N')) {
+                await db.Menus.create({
+                    M_Name: updatedMenu.M_Name,
+                    M_Price: updatedMenu.M_Price,
+                    CS_Id: id
+                });
+                console.log(`New menu has been added.`);
+            }
+            // Ngược lại, tìm và cập nhật menu hiện tại
+            else {
+                const menu = await db.Menus.findOne({
+                    where: { M_Id: updatedMenu.M_Id, CS_Id: id }
+                });
+                if (menu) {
+                    menu.M_Name = updatedMenu.M_Name;
+                    menu.M_Price = updatedMenu.M_Price;
+                    await menu.save();
+                    console.log(`Menu with ID ${updatedMenu.M_Id} has been updated.`);
+                } else {
+                    console.log(`Menu with ID ${updatedMenu.M_Id} not found.`);
+                }
+            }
+        }
+        return true;
+    } catch (error) {
+        console.error('Error updating menus of coffee store record:', error);
+        throw error;
+    }
+};
+const updateServicesCoffeeStore = async (id, updatedServicesList) => {
+    try {
+        for (const updatedServices of updatedServicesList) {
+            const service = await db.Services.findOne({
+                where: { S_Id: updatedServices.S_Id, CS_Id: id }
+            });
+            if (service) {
+                service.S_IsAvailable = updatedServices.S_IsAvailable;
+                service.S_Name = updatedServices.S_Name;
+                service.S_Describe = updatedServices.S_Describe;
+                await service.save();
+                console.log(`Services with ID ${updatedServices.S_Id} has been updated.`);
+            } else {
+                console.log(`Services with ID ${updatedServices.S_Id} not found.`);
+            }
+        }
+    } catch (error) {
+        console.error('Error updating services of coffee store record:', error);
         throw error;
     }
 };
@@ -179,5 +237,8 @@ module.exports = {
     createMenusFromList,
     createServicesFromList,
 
-    updateCoffeeStoreRecord
+    // update
+    updateCoffeeStoreRecord,
+    updateMenusCoffeeStore,
+    updateServicesCoffeeStore
 }

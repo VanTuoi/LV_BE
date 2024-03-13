@@ -1,6 +1,6 @@
 import express from "express";
 const { getTheCoffeeStorebyId, getDetailTheCoffeeStorebyId, getMenusTheCoffeeStorebyId,
-    getServicesTheCoffeeStorebyId, getTagsTheCoffeeStorebyId,
+    getServicesTheCoffeeStorebyId, getTagsTheCoffeeStorebyId, checkManagerStoreStatus
 } = require('../controllers/store-controller');
 
 const { createCoffeeStore, getCoffeeStoreByIdManager, updateCoffeeStore
@@ -17,6 +17,7 @@ function initStoreRouters() {
     router.get('/:id', getTheCoffeeStorebyId);
 
     // Manager store
+    router.post('/check-store', checkManagerStoreStatus);
     router.post('/m-store', createCoffeeStore);
     router.patch('/m-store', updateCoffeeStore);
     router.post('/m-store-full', getCoffeeStoreByIdManager);
