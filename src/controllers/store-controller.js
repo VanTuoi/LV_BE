@@ -117,8 +117,8 @@ const getCoffeeStoreByIdManager = async (req, res) => {
 
 const createCoffeeStore = async (req, res) => {
 
-    const { Manager_Id: managerId, CS_Name: name, CS_Location: location, CS_Detail: detail, CS_ListMenu: listMenu, CS_ListServices: listServices } = req.body;
-
+    const { M_Id: managerId, CS_Name: name, CS_Location: location, CS_Detail: detail, CS_ListMenu: listMenu, CS_ListServices: listServices } = req.body;
+    console.log('', managerId, name, location, detail, listMenu, listServices);
     try {
         if (!managerId || !name || !location || !detail || !listMenu || !listServices) {
             return res.status(200).json(createResponse(-1, 'Vui lòng nhập đủ thông tin'));
@@ -145,7 +145,7 @@ const createCoffeeStore = async (req, res) => {
 }
 
 const updateCoffeeStore = async (req, res) => {
-    const { Manager_Id: manager_Id, CS_Name: name, CS_Location: location, CS_Detail: detail, CS_ListMenus: menus, CS_ListServices: services } = req.body;
+    const { M_Id: manager_Id, CS_Name: name, CS_Location: location, CS_Detail: detail, CS_ListMenus: menus, CS_ListServices: services } = req.body;
 
     try {
         if (!manager_Id || !name && !location && !detail && !menus && !services) {

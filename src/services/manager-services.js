@@ -32,7 +32,6 @@ let findBokingScheduleToMonth = async (month) => {
         return null
     }
 }
-
 let getHoliday = async (month) => {
     try {
 
@@ -95,7 +94,6 @@ let setVacationListServices = async (AS_Holiday, CS_Id) => {
         console.error('Error creating or checkIng Activity_Schedule record:', error);
     }
 }
-
 
 //---------------------------------------------------Manager coffee store------------------------------------------------------------//
 

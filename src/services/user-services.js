@@ -58,6 +58,7 @@ const findLatestStatusByTicketId = async (Reserve_Ticket_ID) => {
         return null;
     }
 };
+
 const findTimeCreateLatestStatusByTicketId = async (Reserve_Ticket_ID) => {
     try {
         const latestStatusRecord = await db.Status_Reserve_Ticket.findOne({
@@ -191,117 +192,18 @@ const createAQrCode = (data) => {
 };
 
 
-// ------------------------------------------------- Register ----------------------------------------//
-
-let salt = bcrypt.genSaltSync(10);
-const handlehashPassword = (password) => {
-    let hashPassword = bcrypt.hashSync(password, salt)
-    return hashPassword;
-}
-
-let getUsers = async (userId) => {
-    try {
-        let newuser = await db.User.findOne({
-            where: { id: userId },
-            attributes: ['id', 'username', 'email'],
-            include: {
-                model: db.Group,
-                attributes: ['id', 'name'],
-            },
-
-            raw: true,
-            nest: true,
-        })
-
-        // let r = await db.Role.findAll({
-        //     include: { model: db.Group, where: { id: 1 } },
-        //     attributes: ['id', 'name', 'email'],
-        //     raw: true,
-        //     nest: true
-        // })
-        if (newuser) {
-            console.log('check new user', newuser);
-
-            // Cookies that have not been signed
-            return newuser
-        }
-        else {
-            console.log('not find user');
-            return null;
-        }
-    } catch (error) {
-        console.log(error)
-    }
-}
-
-let createUser = async (userInfo) => {
-    // console.log('hehe')
-    // return true
-    try {
-        await db.User.create({
-            email: '123@',
-            password: '123',
-            username: 'van tuoi 4',
-        })
-        return true
-    } catch (e) {
-        console.log("error", e);
-        return false
-    }
-}
-let checkEmail = async (email) => {
-    let check = await db.User.findOne({
-        where: { email: email }
-    })
-    return check
-}
-
-let registerUser = async (data) => {
-    try {
-        let check = await checkEmail(data.email)
-        if (check) {
-            return {
-                EM: 'Email is already exist',
-                EC: 1,
-                DT: '',
-            }
-        } else {
-            let hashPassword = handlehashPassword(data.password);
-            await db.User.create({
-                email: data.email,
-                username: data.username,
-                password: hashPassword,
-            })
-            return {
-                EM: 'Register is success !',
-                EC: 0,
-                DT: '',
-            }
-        }
-    } catch (e) {
-        console.log(e)
-        return {
-            EM: 'Somthing wrongs in services',
-            EC: 2,
-            DT: '',
-        }
-    }
-}
-
-function delayOnServer(milliseconds) {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve();
-        }, milliseconds);
-    });
-}
-
 module.exports = {
-    getUsers, createUser, registerUser,
-    createAQrCode, createBookingRecord, checkBookingCondition, findLastBookingId,
+    // Find
+    findBookingbyIp,
+    findLastBookingId,
+    findBookingbyId,
+    findLatestStatusByTicketId,                      // --> No account
+    findTimeCreateLatestStatusByTicketId,           // --> No account
 
-    createStatusBooking, findLatestStatusByTicketId, findBookingbyId,
+    checkBookingCondition,
+    checkTimeTicket,
 
-    // No account
-    findBookingbyIp, checkTimeTicket, findTimeCreateLatestStatusByTicketId
+    createStatusBooking,
+    createAQrCode,
+    createBookingRecord,
 }

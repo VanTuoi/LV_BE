@@ -200,6 +200,7 @@ const updateMenusCoffeeStore = async (id, updatedMenusList) => {
         throw error;
     }
 };
+
 const updateServicesCoffeeStore = async (id, updatedServicesList) => {
     try {
         for (const updatedServices of updatedServicesList) {
@@ -209,7 +210,7 @@ const updateServicesCoffeeStore = async (id, updatedServicesList) => {
             if (service) {
                 service.S_IsAvailable = updatedServices.S_IsAvailable;
                 service.S_Name = updatedServices.S_Name;
-                service.S_Describe = updatedServices.S_Describe;
+                service.S_Describe = updatedServices.S_Describe !== null || updatedServices.S_Describe !== '' ? updatedServices.S_Describe + ' ' : ' ';      // Lỗi trong init sequelize [1,200]
                 await service.save();
                 console.log(`Services with ID ${updatedServices.S_Id} has been updated.`);
             } else {

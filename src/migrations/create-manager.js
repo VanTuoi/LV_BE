@@ -14,7 +14,7 @@ module.exports = {
         type: Sequelize.STRING(50)
       },
       M_Password: {
-        type: Sequelize.STRING(20)
+        type: Sequelize.STRING(200)
       },
       M_PhoneNumber: {
         type: Sequelize.STRING(10)
