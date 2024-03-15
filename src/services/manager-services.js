@@ -2,7 +2,7 @@ import db from "../models/index";
 const { Op } = require('sequelize');
 const QRCode = require('qrcode')
 
-let findBokingScheduleToMonth = async (month) => {
+let findBokingScheduleToMonth = async (month, id) => {
     try {
         const startDate = new Date(+month);
         startDate.setDate(1);
@@ -11,19 +11,16 @@ let findBokingScheduleToMonth = async (month) => {
 
         const newRecord = await db.Reserve_Ticket.findAll({
             where: {
+                CS_Id: id,
                 RT_DateTimeArrival: {
                     [Op.between]: [startDate, endDate]
                 }
             },
             // include: 'User',
             include: [{
-                model: db.Table_Booking_Schedule,
-                include: [{
-                    model: db.Coffee_Store,
-                    attributes: ['BS_Name']
-                }],
-                attributes: []
-            }]
+                model: db.Coffee_Store,
+                attributes: ['CS_Name']
+            }],
         });
         return newRecord;
 

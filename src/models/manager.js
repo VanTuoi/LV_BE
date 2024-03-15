@@ -23,14 +23,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        len: [1, 50]
+        len: [0, 50]
       }
     },
     M_Password: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        len: [8, 200]
+        len: [0, 200]
       }
     },
     M_PhoneNumber: {

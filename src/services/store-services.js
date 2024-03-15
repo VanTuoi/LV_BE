@@ -162,6 +162,7 @@ const updateCoffeeStoreRecord = async (id, name, location, detail) => {
 const updateMenusCoffeeStore = async (id, updatedMenusList) => {
     try {
         for (const updatedMenu of updatedMenusList) {
+            console.log('updatedMenu', updatedMenu);
             // Kiểm tra nếu M_Id bắt đầu bằng 'D', thực hiện xóa menu
             if (updatedMenu.M_Id.toString().startsWith('D')) {
                 const menuIdToDelete = updatedMenu.M_Id.substring(2); // Lấy phần số của ID
@@ -210,7 +211,7 @@ const updateServicesCoffeeStore = async (id, updatedServicesList) => {
             if (service) {
                 service.S_IsAvailable = updatedServices.S_IsAvailable;
                 service.S_Name = updatedServices.S_Name;
-                service.S_Describe = updatedServices.S_Describe !== null || updatedServices.S_Describe !== '' ? updatedServices.S_Describe + ' ' : ' ';      // Lỗi trong init sequelize [1,200]
+                service.S_Describe = updatedServices.S_Describe ? updatedServices.S_Describe : null;
                 await service.save();
                 console.log(`Services with ID ${updatedServices.S_Id} has been updated.`);
             } else {

@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        len: [1, 50]
+        len: [0, 50]
       }
     },
     CS_Id: DataTypes.INTEGER,

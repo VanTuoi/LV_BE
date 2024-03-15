@@ -49,14 +49,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        len: [1, 100]
+        len: [0, 200]
       }
     },
     CS_Location: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        len: [1, 100]
+        len: [0, 200]
       }
     },
     CS_Detail: {

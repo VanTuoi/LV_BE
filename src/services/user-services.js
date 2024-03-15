@@ -44,9 +44,10 @@ const findLatestStatusByTicketId = async (Reserve_Ticket_ID) => {
     try {
         const latestStatusRecord = await db.Status_Reserve_Ticket.findOne({
             where: { RT_Id: Reserve_Ticket_ID },
-            order: [['createdAt', 'DESC']] // Sắp xếp giảm dần dựa vào trường createdAt
-        });
+            order: [['createdAt', 'DESC']]
+        })
 
+        console.log('latestStatusRecord', latestStatusRecord);
         if (!latestStatusRecord) {
             console.log('No status found for the given ticket ID');
             return null;
@@ -83,7 +84,11 @@ const findBookingbyId = async (Id) => {
         const bookingbyId = await db.Reserve_Ticket.findOne({
             where: {
                 RT_Id: Id,
-            }
+            },
+            include: [{
+                model: db.User,
+                attributes: ['U_Name']
+            }]
         });
         // console.log('booking', bookingbyId);
         return bookingbyId || null;
@@ -123,7 +128,7 @@ const findLastBookingId = async (userId, storeId) => {
     }
 };
 
-const checkBookingCondition = async (bookingTime, userId, storeId) => {
+const checkBookingCondition = async (bookingTime, userId, ip, storeId) => {
     try {
         const startTime = new Date(bookingTime - (2 * 60 * 60 * 100 + 60 * 1000)); // Thời gian bắt đầu (bookingTime)
         const endTime = new Date(bookingTime + (2 * 60 * 60 * 1000 - 60 * 1000)); // Thời gian kết thúc (2 giờ sau bookingTime)
@@ -131,14 +136,24 @@ const checkBookingCondition = async (bookingTime, userId, storeId) => {
         // Tìm xem có bất kỳ đặt bàn nào trong khoảng thời gian từ startTime đến endTime không
         const bookingCount = await db.Reserve_Ticket.count({
             where: {
-                U_Id: userId,
-                CS_Id: storeId,
-                RT_DateTimeArrival: {
-                    [Op.between]: [startTime, endTime]
-                }
+                [Op.or]: [
+                    {
+                        U_Id: userId,
+                        CS_Id: storeId,
+                        RT_DateTimeArrival: {
+                            [Op.between]: [startTime, endTime]
+                        }
+                    },
+                    {
+                        RT_Ip: ip,
+                        CS_Id: storeId,
+                        RT_DateTimeArrival: {
+                            [Op.between]: [startTime, endTime]
+                        }
+                    }
+                ]
             }
         });
-
         // Trả về true nếu không có đặt bàn nào trong khoảng thời gian đó, ngược lại trả về false
         return bookingCount === 0;
     } catch (error) {

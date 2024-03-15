@@ -1,5 +1,6 @@
 import managerServices from '../services/manager-services'
 import userServices from '../services/user-services'
+import storeServices from '../services/store-services'
 import createResponse from '../helpers/responseHelper';
 import db from "../models/index";
 
@@ -12,9 +13,14 @@ const scheduleBooking = async (req, res) => {
     try {
         await delay(200);
 
-        const month = req.query.month;
+        const { manager_Id: manager_Id, month: month } = req.body;
+        const store = await storeServices.findCoffeeStoreById(manager_Id)
 
-        const listBooking = await managerServices.findBokingScheduleToMonth(month);
+        if (!store) {
+            return res.status(200).json(createResponse(0, 'Không tìm thấy cửa hàng'));
+        }
+
+        const listBooking = await managerServices.findBokingScheduleToMonth(month, store.CS_Id);
 
         if (listBooking) {
             return res.status(200).json(createResponse(0, 'Lấy danh sách đặt bàn thành công', listBooking));
@@ -73,10 +79,17 @@ const createAHoliday = async (req, res) => {
 //-------------------------------------------------check in--------------------------------------------//
 
 const checkIn = async (req, res) => {
-    const RT_Id = +req.body.RT_Id;
 
-    if (!RT_Id) {
+    const { manager_Id: manager_Id, RT_Id: RT_Id } = req.body;
+
+    console.log('RT_Id', RT_Id);
+    if (!RT_Id || !manager_Id) {
         return res.status(201).json(createResponse(-1, 'Dữ liệu check in không đủ', null));
+    }
+    const store = await storeServices.findCoffeeStoreById(manager_Id)
+
+    if (!store) {
+        return res.status(200).json(createResponse(0, 'Không tìm thấy cửa hàng từ ID manager'));
     }
 
     try {
@@ -89,6 +102,10 @@ const checkIn = async (req, res) => {
         }
 
         const detail = await userServices.findBookingbyId(RT_Id);
+
+        if (detail.CS_Id !== store.CS_Id) {
+            return res.status(200).json(createResponse(0, 'Phiếu đặt bàn không thuộc về cửa hàng của bạn', null));
+        }
 
         if (timeDifferenceInMinutes < -15 || status === 'Late') {
             const timeCreate = await userServices.createStatusBooking(RT_Id, 'Late');

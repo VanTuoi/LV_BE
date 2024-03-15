@@ -9,14 +9,17 @@ const testAPI = async (req, res) => {
 
 const checkTimeABooking = async (req, res) => {
     try {
-        const { RT_DateTimeArrival: bookingDate, U_Id: userID, CS_Id: storeID } = req.body;
+        const { RT_DateTimeArrival: bookingDate, U_Id: userID, CS_Id: storeID, RT_Ip: RT_Ip } = req.body;
 
-        if (!bookingDate || !userID || !storeID) {
-            return res.status(201).json(createResponse(-1, 'Dữ liệu không đủ', null));
+        if ((!bookingDate || !storeID) || (!userID && !RT_Ip)) {
+            return res.status(201).json(createResponse(-1, 'Dữ liệu check time không đủ', null));
         }
 
-        const isValidBookingTime = await userServices.checkBookingCondition(+bookingDate, +userID, +storeID);
-        return res.status(200).json(createResponse(0, 'Tìm thông tin đặt bàn thành công', isValidBookingTime));
+        const isValidBookingTime = await userServices.checkBookingCondition(+bookingDate, +userID, RT_Ip, +storeID);
+        if (isValidBookingTime) {
+            return res.status(200).json(createResponse(0, 'Tìm thông tin đặt bàn thành công', null));
+        }
+        return res.status(200).json(createResponse(1, 'Bạn đã đặt trong khoảng thời gian gần đó', isValidBookingTime));
     } catch (error) {
         console.error('Lỗi từ server:', error);
         return res.status(500).json(createResponse(-5, 'Lỗi từ server', null));
@@ -26,6 +29,8 @@ const checkTimeABooking = async (req, res) => {
 const createABooking = async (req, res) => {
     try {
         const { RT_DateTimeArrival: bookingDate, U_Id: userID, CS_Id: storeID, RT_NumberOfParticipants: numberOfParticipants, RT_Ip: ip } = req.body;
+
+        console.log(userID, bookingDate, storeID);
 
         if (!bookingDate || !storeID || !numberOfParticipants) {
             return res.status(201).json(createResponse(-1, 'Dữ liệu phiếu đặt bàn không đủ', null));
@@ -40,7 +45,7 @@ const createABooking = async (req, res) => {
                 }
             }
 
-            const newRecord = await userServices.createBookingRecord(bookingDate, numberOfParticipants, ip, null, storeID);
+            const newRecord = await userServices.createBookingRecord(bookingDate, numberOfParticipants, ip, null, +storeID);
             if (newRecord) {
                 const ID_lastBokking = await userServices.findBookingbyIp(ip);
                 userServices.createStatusBooking(ID_lastBokking, 'Waiting');
@@ -51,7 +56,8 @@ const createABooking = async (req, res) => {
             }
         }
 
-        const isValidBookingTime = await userServices.checkBookingCondition(bookingDate, userID, storeID);
+        const isValidBookingTime = await userServices.checkBookingCondition(bookingDate, +userID, ip, +storeID);
+
         if (isValidBookingTime) {
             const newRecord = await userServices.createBookingRecord(bookingDate, numberOfParticipants, null, userID, storeID);
             if (newRecord) {
@@ -71,23 +77,8 @@ const createABooking = async (req, res) => {
     }
 };
 
-const createAccount = async (req, res) => {
-    let userId = req.query.id;
-    console.log('run user id', req.query);
-    if (userId != null) {
-        console.log('Cookies: ', req.cookies)
-
-        // Cookies that have been signed
-        console.log('Signed Cookies: ', req.signedCookies)
-
-        // let userData = await userServices.getUsers(userId);
-        return res.send(userData);
-    } else {
-        return res.send('data not found')
-    };
-}
-
-
 module.exports = {
-    createAccount, createABooking, checkTimeABooking, testAPI
+    checkTimeABooking,
+    createABooking,
+    testAPI
 }

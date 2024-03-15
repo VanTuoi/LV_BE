@@ -90,9 +90,9 @@ const checkManagerStoreStatus = async (req, res) => {
         const storeFound = await storeServices.findCoffeeStoreIdByManagerId(id);
 
         if (storeFound) {
-            return res.status(200).json(createResponse(0, 'Người quản lý đã liên kết với cửa hàng', { have: true }));
+            return res.status(200).json(createResponse(0, 'Người quản lý đã liên kết với cửa hàng', storeFound.CS_Id));
         } else {
-            return res.status(200).json(createResponse(1, 'Người quản lý chưa liên kết với cửa hàng nào', { have: false }));
+            return res.status(200).json(createResponse(1, 'Người quản lý chưa liên kết với cửa hàng nào', null));
         }
     } catch (error) {
         console.error('Lỗi khi kiểm tra trạng thái cửa hàng của người quản lý:', error);
@@ -117,7 +117,7 @@ const getCoffeeStoreByIdManager = async (req, res) => {
 
 const createCoffeeStore = async (req, res) => {
 
-    const { M_Id: managerId, CS_Name: name, CS_Location: location, CS_Detail: detail, CS_ListMenu: listMenu, CS_ListServices: listServices } = req.body;
+    const { M_Id: managerId, CS_Name: name, CS_Location: location, CS_Detail: detail, CS_ListMenus: listMenu, CS_ListServices: listServices } = req.body;
     console.log('', managerId, name, location, detail, listMenu, listServices);
     try {
         if (!managerId || !name || !location || !detail || !listMenu || !listServices) {
