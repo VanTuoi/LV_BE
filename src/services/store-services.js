@@ -5,7 +5,7 @@ const findCoffeeStoreById = async (id) => {
     try {
         const coffeeStore = await db.Coffee_Store.findOne({
             where: { CS_Id: id },
-            attributes: ['CS_Id', 'CS_Name', 'CS_Location'],
+            attributes: ['CS_Id', 'CS_Name', 'CS_Location', 'CS_MaxPeople', 'CS_TimeOpen', 'CS_TimeClose'],
         });
         return coffeeStore;
     } catch (error) {
@@ -92,12 +92,19 @@ const findCoffeeStoreIdByManagerId = async (managerId) => {
 
 //----------------------------------------------- Tạo mới-----------------------------------------//
 
-const createCoffeeStore = async (id, name, location, detail) => {
+const createCoffeeStore = async (id, name, location, detail, maxPeople, timeOpen, timeClose) => {
     try {
+
+        let coverTimeOpen = new Date(timeOpen)
+        let coverTimeClose = new Date(timeClose)
+
         const newRecord = await db.Coffee_Store.create({
             CS_Name: name,
             CS_Location: location,
             CS_Detail: detail,
+            CS_MaxPeople: +maxPeople,
+            CS_TimeOpen: coverTimeOpen,
+            CS_TimeClose: coverTimeClose,
             M_Id: id
         });
         return newRecord;
@@ -140,7 +147,7 @@ const createServicesFromList = async (store_Id, listServices) => {
     }
 };
 
-const updateCoffeeStoreRecord = async (id, name, location, detail) => {
+const updateCoffeeStoreRecord = async (id, name, location, maxPeople, timeOpen, timeClose, detail) => {
     try {
         // Tìm cửa hàng cà phê bằng ID
         const storeToUpdate = await db.Coffee_Store.findByPk(id);
@@ -149,6 +156,9 @@ const updateCoffeeStoreRecord = async (id, name, location, detail) => {
         }
         storeToUpdate.CS_Name = name;
         storeToUpdate.CS_Location = location;
+        storeToUpdate.CS_MaxPeople = maxPeople;
+        storeToUpdate.CS_TimeOpen = timeOpen;
+        storeToUpdate.CS_TimeClose = timeClose;
         storeToUpdate.CS_Detail = detail;
         await storeToUpdate.save();
 
@@ -162,14 +172,13 @@ const updateCoffeeStoreRecord = async (id, name, location, detail) => {
 const updateMenusCoffeeStore = async (id, updatedMenusList) => {
     try {
         for (const updatedMenu of updatedMenusList) {
-            console.log('updatedMenu', updatedMenu);
             // Kiểm tra nếu M_Id bắt đầu bằng 'D', thực hiện xóa menu
             if (updatedMenu.M_Id.toString().startsWith('D')) {
                 const menuIdToDelete = updatedMenu.M_Id.substring(2); // Lấy phần số của ID
                 await db.Menus.destroy({
                     where: { M_Id: menuIdToDelete, CS_Id: id }
                 });
-                console.log(`Menu with ID ${menuIdToDelete} has been deleted.`);
+                // console.log(`Menu with ID ${menuIdToDelete} has been deleted.`);
             }
             // Kiểm tra nếu M_Id bắt đầu bằng 'N', thực hiện thêm mới menu
             else if (updatedMenu.M_Id.toString().startsWith('N')) {
@@ -178,7 +187,7 @@ const updateMenusCoffeeStore = async (id, updatedMenusList) => {
                     M_Price: updatedMenu.M_Price,
                     CS_Id: id
                 });
-                console.log(`New menu has been added.`);
+                // console.log(`New menu has been added.`);
             }
             // Ngược lại, tìm và cập nhật menu hiện tại
             else {
@@ -189,9 +198,9 @@ const updateMenusCoffeeStore = async (id, updatedMenusList) => {
                     menu.M_Name = updatedMenu.M_Name;
                     menu.M_Price = updatedMenu.M_Price;
                     await menu.save();
-                    console.log(`Menu with ID ${updatedMenu.M_Id} has been updated.`);
+                    // console.log(`Menu with ID ${updatedMenu.M_Id} has been updated.`);
                 } else {
-                    console.log(`Menu with ID ${updatedMenu.M_Id} not found.`);
+                    // console.log(`Menu with ID ${updatedMenu.M_Id} not found.`);
                 }
             }
         }
@@ -213,7 +222,7 @@ const updateServicesCoffeeStore = async (id, updatedServicesList) => {
                 service.S_Name = updatedServices.S_Name;
                 service.S_Describe = updatedServices.S_Describe ? updatedServices.S_Describe : null;
                 await service.save();
-                console.log(`Services with ID ${updatedServices.S_Id} has been updated.`);
+                // console.log(`Services with ID ${updatedServices.S_Id} has been updated.`);
             } else {
                 console.log(`Services with ID ${updatedServices.S_Id} not found.`);
             }

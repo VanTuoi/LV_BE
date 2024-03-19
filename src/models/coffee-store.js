@@ -66,6 +66,15 @@ module.exports = (sequelize, DataTypes) => {
         len: [0, 20000]
       }
     },
+    CS_MaxPeople: {
+      type: DataTypes.INTEGER,
+    },
+    CS_TimeOpen: {
+      type: DataTypes.DATE,
+    },
+    CS_TimeClose: {
+      type: DataTypes.DATE,
+    },
     M_Id: DataTypes.INTEGER,
   }, {
     sequelize,

@@ -89,7 +89,7 @@ const loginUser = async (req, res) => {
             if (statusAccount === 'Lock') {
                 return res.status(200).json(createResponse(4, 'Tài khoản của bạn đang bị khóa'));
             }
-            console.log('account', account);
+            // console.log('account', account);
 
             const isPasswordCorrect = await authenticationServices.comparePassword(password, account.U_Password);
 

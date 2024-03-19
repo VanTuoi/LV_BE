@@ -97,6 +97,8 @@ const checkIn = async (req, res) => {
         const status = await userServices.findLatestStatusByTicketId(RT_Id);
         const timeCheckIn = await userServices.findTimeCreateLatestStatusByTicketId(RT_Id);
 
+        console.log('check in', status, timeCheckIn, timeDifferenceInMinutes);
+
         if (!status || !timeDifferenceInMinutes) {
             return res.status(200).json(createResponse(0, 'Không tìm thấy thông tin đặt bàn', null));
         }
@@ -107,14 +109,19 @@ const checkIn = async (req, res) => {
             return res.status(200).json(createResponse(0, 'Phiếu đặt bàn không thuộc về cửa hàng của bạn', null));
         }
 
-        if (timeDifferenceInMinutes < -15 || status === 'Late') {
-            const timeCreate = await userServices.createStatusBooking(RT_Id, 'Late');
-            return res.status(200).json(createResponse(0, 'Bạn đã trễ hẹn', { detail, timeCreate }));
+        if (status === 'Late') {
+            return res.status(200).json(createResponse(0, 'Bạn đã trễ hẹn', { detail, timeCheckIn }));
         }
 
         if (timeDifferenceInMinutes > 45 && status === 'Waiting') {
             return res.status(200).json(createResponse(0, 'Chưa đến hẹn', { detail, timeCheckIn: null }));
         }
+
+        if (timeDifferenceInMinutes < -15) {
+            const timeCreate = await userServices.createStatusBooking(RT_Id, 'Late');
+            return res.status(200).json(createResponse(0, 'Bạn đã trễ hẹn', { detail, timeCreate }));
+        }
+
 
         if ((timeDifferenceInMinutes >= -45 || timeDifferenceInMinutes <= 15) && status === 'Waiting') {
             const timeCreate = await userServices.createStatusBooking(RT_Id, 'Has Arrived');

@@ -21,6 +21,15 @@ module.exports = {
         allowNull: false,
         type: Sequelize.STRING(20000)
       },
+      CS_MaxPeople: {
+        type: Sequelize.INTEGER
+      },
+      CS_TimeOpen: {
+        type: Sequelize.TIME
+      },
+      CS_TimeClose: {
+        type: Sequelize.TIME
+      },
       M_Id: {
         type: Sequelize.INTEGER
       },

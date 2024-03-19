@@ -117,21 +117,25 @@ const getCoffeeStoreByIdManager = async (req, res) => {
 
 const createCoffeeStore = async (req, res) => {
 
-    const { M_Id: managerId, CS_Name: name, CS_Location: location, CS_Detail: detail, CS_ListMenus: listMenu, CS_ListServices: listServices } = req.body;
-    console.log('', managerId, name, location, detail, listMenu, listServices);
+    const { M_Id: managerId, CS_Name: name, CS_Location: location, CS_Detail: detail,
+        CS_MaxPeople: maxPeople, CS_TimeOpen: timeOpen, CS_TimeClose: timeClose,
+        CS_ListMenus: listMenu, CS_ListServices: listServices
+    } = req.body;
+    console.log('', managerId, name, location, detail, maxPeople, timeOpen, timeClose);
     try {
         if (!managerId || !name || !location || !detail || !listMenu || !listServices) {
             return res.status(200).json(createResponse(-1, 'Vui lòng nhập đủ thông tin'));
         }
 
         await db.sequelize.transaction(async (t) => {
+
             let coffeeStoreId = await storeServices.findCoffeeStoreIdByManagerId(managerId, t);
 
             if (coffeeStoreId) {
                 return res.status(200).json(createResponse(0, 'Bạn đã quản lý 1 cửa hàng', { have: true }));
             }
 
-            await storeServices.createCoffeeStore(managerId, name, location, detail, t);
+            await storeServices.createCoffeeStore(managerId, name, location, detail, maxPeople, timeOpen, timeClose, t);
             coffeeStoreId = await storeServices.findCoffeeStoreIdByManagerId(managerId, t);
             await storeServices.createMenusFromList(coffeeStoreId, listMenu, t);
             await storeServices.createServicesFromList(coffeeStoreId, listServices, t);
@@ -145,7 +149,10 @@ const createCoffeeStore = async (req, res) => {
 }
 
 const updateCoffeeStore = async (req, res) => {
-    const { M_Id: manager_Id, CS_Name: name, CS_Location: location, CS_Detail: detail, CS_ListMenus: menus, CS_ListServices: services } = req.body;
+    const { M_Id: manager_Id, CS_Name: name, CS_Location: location, CS_Detail: detail,
+        CS_MaxPeople: maxPeople, CS_TimeOpen: timeOpen, CS_TimeClose: timeClose,
+        CS_ListMenus: menus, CS_ListServices: services
+    } = req.body;
 
     try {
         if (!manager_Id || !name && !location && !detail && !menus && !services) {
@@ -157,7 +164,7 @@ const updateCoffeeStore = async (req, res) => {
             return res.status(200).json(createResponse(2, 'Bạn chưa quản lý cửa hàng nào', null));
         }
 
-        storeServices.updateCoffeeStoreRecord(id, name, location, detail);
+        await storeServices.updateCoffeeStoreRecord(id, name, location, maxPeople, timeOpen, timeClose, detail);
 
         if (menus) {
             await storeServices.updateMenusCoffeeStore(id, menus);
