@@ -16,7 +16,8 @@ const createJWT = (id) => {
   }
 };
 
-const verifyToken = async (req, res, next) => {
+const verifyTokenUser = async (req, res, next) => {
+  console.log('run', req.body, req.query, req.headers["x-access-token"]);
   const key = process.env.JWT_SECRET;
   const token = req.body.token || req.query.token || req.headers["x-access-token"];
 
@@ -42,5 +43,5 @@ const verifyToken = async (req, res, next) => {
 };
 
 module.exports = {
-  createJWT, verifyToken
+  createJWT, verifyTokenUser
 }
