@@ -1,4 +1,5 @@
 import db from "../models/index";
+import jwt from 'jsonwebtoken';
 const bcrypt = require('bcrypt');
 
 let salt = bcrypt.genSaltSync(10);
@@ -25,6 +26,18 @@ let findPhoneUser = async (phone) => {
         return havePhone ? true : false
     } catch (error) {
         console.log('Error find Phone user', error);
+        return null
+    }
+}
+
+let findEmailUser = async (email) => {
+    try {
+        let haveEmail = await db.User.findOne({
+            where: { U_Email: email }
+        })
+        return haveEmail ? true : false
+    } catch (error) {
+        console.log('Error find email user', error);
         return null
     }
 }
@@ -61,7 +74,7 @@ let findPasswordOfManagerByPhone = async (phone) => {
             where: { M_PhoneNumber: phone },
             attributes: ['M_Password'],
         })
-        // console.log('haveUser', haveUser);
+        // console.log('haveUser', haveUser); 
         return haveManager ? haveManager : null
     } catch (e) {
         console.log(e)
@@ -74,6 +87,19 @@ let findUserByPhone = async (phone) => {
         let haveUser = await db.User.findOne({
             where: { U_PhoneNumber: phone },
             attributes: ['U_Id', 'U_Name', 'U_PrestigeScore'],
+        })
+        return haveUser ? haveUser : null
+    } catch (e) {
+        console.log(e)
+        return null
+    }
+}
+
+let findUserByEmail = async (email) => {
+    try {
+        let haveUser = await db.User.findOne({
+            where: { U_Email: email },
+            attributes: ['U_Id', 'U_Name'],
         })
         return haveUser ? haveUser : null
     } catch (e) {
@@ -204,8 +230,10 @@ module.exports = {
     comparePassword,
     // Find
     findPhoneUser,
+    findEmailUser,
     findPhoneManager,
     findUserByPhone,
+    findUserByEmail,
     findManagerByPhone,
     findPasswordOfUserByPhone,
     findPasswordOfManagerByPhone,

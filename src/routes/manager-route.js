@@ -6,7 +6,7 @@ const { scheduleBooking, listHoliday, createAHoliday, checkIn } = require('../co
 function initManagerRoutes() {
     let router = express.Router();
 
-    router.all('/*', verifyTokenUser)
+    // router.all('/*', verifyTokenUser)
     router.post('/booking-schedule', scheduleBooking);
     router.get('/holiday', listHoliday);
     router.post('/holiday', createAHoliday);

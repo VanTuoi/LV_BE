@@ -4,6 +4,9 @@ import db from "../models/index";
 import auth from '../middleware/authentication'
 import createResponse from '../helpers/responseHelper';
 import authenticationServices from '../services/authentication-services'
+import userServices from '../services/user-services'
+import sendEmail from '../services/email-services'
+import jwt from 'jsonwebtoken';
 
 const registerUser = async (req, res) => {
     const { U_Name: name, U_Email: email, U_PhoneNumber: phone, U_Password: password } = req.body;
@@ -97,8 +100,7 @@ const loginUser = async (req, res) => {
                 return res.status(200).json(createResponse(2, 'Mật khẩu không chính xác'));
             }
             account = await authenticationServices.findUserByPhone(phone)
-            const jwtToken = await auth.createJWT(account.U_Id);
-            // console.log('Cấp jwtToken u', jwtToken);
+            const jwtToken = await auth.createJWTDefault(account.U_Id);
             res.cookie("Jwt", jwtToken, { httpOnly: true, maxAge: 2 * 60 * 60 * 1000 })
             return res.status(200).json(createResponse(0, 'Đăng nhập thành công', account));
         }
@@ -142,7 +144,7 @@ const loginManager = async (req, res) => {
                 return res.status(200).json(createResponse(2, 'Mật khẩu không chính xác'));
             }
             account = await authenticationServices.findManagerByPhone(phone)
-            const jwtToken = await auth.createJWT(fullManager.M_Id);
+            const jwtToken = await auth.createJWTDefault(fullManager.M_Id);
             // console.log('Cấp jwtToken m', jwtToken);
             res.cookie("Jwt", jwtToken, { httpOnly: true, maxAge: 2 * 60 * 60 * 1000 })
             return res.status(200).json(createResponse(0, 'Đăng nhập thành công', account));
@@ -153,6 +155,68 @@ const loginManager = async (req, res) => {
         return res.status(500).json(createResponse(-5, 'Lỗi từ server'));
     }
 };
+const logOut = async (req, res) => {
+    res.clearCookie('Jwt');
+    return res.status(200).json(createResponse(0, 'Đăng xuất thành công'));
+}
+const forgotPasswordUser = async (req, res) => {
+
+    const { U_Email: email } = req.body;
+
+    try {
+        if (!email) {
+            return res.status(200).json(createResponse(-1, 'Vui lòng nhập email'));
+        }
+
+        const isEmailExist = await authenticationServices.findEmailUser(email);
+
+        if (!isEmailExist) {
+            return res.status(200).json(createResponse(1, 'Email không tồn tại trong hệ thống'));
+        } else {
+
+
+            let fullUser = await authenticationServices.findUserByEmail(email)
+            let statusAccount = await authenticationServices.findLatestStatusByUserId(fullUser.U_Id)
+            if (statusAccount === 'Lock') {
+                return res.status(200).json(createResponse(4, 'Tài khoản của bạn đang bị khóa không thể đổi mật khẩu'));
+            }
+            const jwtToken = await auth.createJWTChangePassword(fullUser.U_Id);
+            // sendEmail(`${account.U_Email}`, `${account.U_Name}`, `http://localhost:3000/authentication/change-password?Jwt=${jwtToken}`);
+            return res.status(200).json(createResponse(0, 'Tạo url đổi mật khẩu thành công', `http://localhost:3000/authentication/change-password?Jwt=${jwtToken}`));
+        }
+
+    } catch (error) {
+        console.error('Lỗi từ server:', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi từ server'));
+    }
+}
+const changePasswordUser = async (req, res) => {
+    const { Jwt: Jwt, U_Password: newPassword } = req.body;
+    const key = process.env.JWT_SECRET;
+
+    if (!Jwt || !newPassword) {
+        return res.status(200).json(createResponse(-1, 'Không đủ dữ liệu', null));
+    }
+
+    try {
+        const decoded = jwt.verify(Jwt, key);
+
+        const user = await userServices.findUserById(decoded.data.U_Id)
+
+        if (!user) {
+            return res.status(200).json(createResponse(-2, 'Không tìm thấy tài khoản', null)); // Trả về status 403 và thông báo lỗi
+        }
+        userServices.changePasswordUser(user.U_Id, newPassword)
+        return res.status(200).json(createResponse(0, 'Đăng xuất thành công'));
+    } catch (error) {
+        console.error('Error verifying JWT:', error);
+        return res.status(200).json(createResponse(-3, 'Token không hợp lệ vui lòng thử lại', null)); // Trả về status 401 và thông báo lỗi
+    }
+
+}
+
+
+
 
 module.exports = {
     registerUser,
@@ -160,4 +224,8 @@ module.exports = {
 
     loginUser,
     loginManager,
+    logOut,
+
+    forgotPasswordUser,
+    changePasswordUser
 }

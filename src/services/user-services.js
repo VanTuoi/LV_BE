@@ -1,10 +1,15 @@
 const { Op } = require('sequelize');
 const QRCode = require('qrcode')
-const bcrypt = require('bcrypt');
-
 import db from "../models/index";
 import { creatJWT } from '../middleware/authentication'
+const bcrypt = require('bcrypt');
 
+let salt = bcrypt.genSaltSync(10);
+//---------------------------------------------PW--------------------------
+const handlehashPassword = async (password) => {
+    let hashPassword = bcrypt.hashSync(password, salt)
+    return hashPassword;
+}
 
 // ----------------------------------------Booking ---------------------------------------------------------//
 const createStatusBooking = async (Reserve_Ticket_ID, status) => {
@@ -206,6 +211,59 @@ const createAQrCode = (data) => {
     });
 };
 
+// ---------------------------------------------------------------Info------------------------------------------------------//
+const findUserById = async (id) => {
+    try {
+        const user = await db.User.findByPk(id)
+        return user;
+    } catch (error) {
+        console.error('Error finding user details:', error);
+        return null;
+    }
+};
+
+const updateInfoUser = async (id, name, phone, email, gender, birthday) => {
+    try {
+        const user = await db.User.findByPk(id);
+
+        if (!user) {
+            console.error('User not found');
+            return null;
+        }
+        user.U_Name = name;
+        user.U_PhoneNumber = phone;
+        user.U_Email = email;
+        user.U_Gender = gender;
+        user.U_Birthday = birthday;
+
+        await user.save(); // Save the changes to the database
+        return user;
+    } catch (error) {
+        console.error('Error updating user:', error);
+        return null;
+    }
+};
+
+const changePasswordUser = async (id, newPassword) => {
+    try {
+
+        let passwordHash = await handlehashPassword(newPassword)
+
+        const user = await db.User.findByPk(id);
+
+        if (!user) {
+            console.error('User not found');
+            return null;
+        }
+        user.U_Password = passwordHash;
+
+        await user.save(); // Save the changes to the database
+        return user;
+    } catch (error) {
+        console.error('Error updating passwrod user:', error);
+        return null;
+    }
+};
 
 module.exports = {
     // Find
@@ -215,10 +273,16 @@ module.exports = {
     findLatestStatusByTicketId,                      // --> No account
     findTimeCreateLatestStatusByTicketId,           // --> No account
 
+    findUserById,
+    updateInfoUser,
+    changePasswordUser,
+
     checkBookingCondition,
     checkTimeTicket,
 
     createStatusBooking,
     createAQrCode,
     createBookingRecord,
+
+
 }

@@ -2,6 +2,7 @@
 import express from "express";
 
 // In the project
+import createResponse from '../helpers/responseHelper';
 import initAuthRoutes from './auth-route';
 import initUserRoutes from './user-route';
 import initManagerRoutes from './manager-route';
@@ -17,12 +18,8 @@ let initWebRoutes = (app) => {
     app.use('/api/v1/store', initStoreRouters());
 
     // Route chung
-    app.get('/*', (req, res) => {
-        return res.status(200).json({
-            errorCode: '-6',
-            errorMessage: 'Không tìm thấy url trong backend',
-            data: null
-        });
+    app.all('/*', (req, res) => {
+        return res.status(200).json(createResponse(-1, 'Không tìm thấy url'));
     });
 }
 

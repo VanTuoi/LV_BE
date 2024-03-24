@@ -77,8 +77,59 @@ const createABooking = async (req, res) => {
     }
 };
 
+// --------------------------------------------------manager info----------------------------------------------//
+
+const getInforUser = async (req, res) => {
+    try {
+        const { U_Id: id, } = req.body;
+
+        if (!id) {
+            return res.status(201).json(createResponse(-1, 'Không tìm thấy id', null));
+        }
+        let user = await userServices.findUserById(id)
+
+        if (!user) {
+            return res.status(200).json(createResponse(-2, 'Không tìm thấy người dùng', null));
+        }
+        return res.status(200).json(createResponse(0, 'Tìm thấy người dùng', user));
+    } catch (error) {
+        console.error('Lỗi từ server:', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi từ server', null));
+    }
+}
+
+const updateInfo = async (req, res) => {
+    try {
+        const { U_Name: name, U_Id: id, U_Email: email, U_PhoneNumber: phone, U_Gender: gender, U_Birthday: birthday } = req.body;
+
+        // console.log('', id, name, email, phone, gender, birthday);
+
+        if (!name || !id || !email || !phone || !gender) {
+            return res.status(201).json(createResponse(-1, 'Dữ liệu cập nhật người dùng không đủ', null));
+        }
+        let haveUser = await userServices.findUserById(id)
+
+        if (!haveUser) {
+            return res.status(200).json(createResponse(-2, 'Không tìm thấy người dùng', null));
+        }
+        let user = await userServices.updateInfoUser(id, name, phone, email, gender, birthday)
+
+        if (user) {
+            return res.status(200).json(createResponse(0, 'Cập nhật thành công', user));
+        }
+        return res.status(200).json(createResponse(-3, 'Cập nhật thất bại', null));
+    } catch (error) {
+        console.error('Lỗi từ server:', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi từ server', null));
+    }
+}
+
 module.exports = {
     checkTimeABooking,
     createABooking,
+
+    getInforUser,
+    updateInfo,
+
     testAPI
 }

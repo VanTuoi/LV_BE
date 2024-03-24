@@ -32,7 +32,6 @@ const scheduleBooking = async (req, res) => {
         return res.status(500).json(createResponse(-5, 'Lỗi từ server', null));
     }
 };
-
 const listHoliday = async (req, res) => {
     try {
         const month = req.query.AS_Holiday;
@@ -49,7 +48,6 @@ const listHoliday = async (req, res) => {
         return res.status(500).json(createResponse(-5, 'Lỗi từ server', null));
     }
 };
-
 const createAHoliday = async (req, res) => {
 
     console.log('', req.body.AS_Holiday, req.body.CS_Id);
