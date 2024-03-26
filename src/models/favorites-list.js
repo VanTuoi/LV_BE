@@ -10,7 +10,7 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'U_Id',
       })
       Favorites_List.belongsToMany(models.Coffee_Store, {
-        through: 'Favorites_Store',
+        through: 'Favorites_List',
         foreignKey: 'FL_Id', // Khóa ngoại của Favorites_List trong bảng trung gian
         otherKey: 'CS_Id', // Khóa ngoại của Coffee_Store trong bảng trung gian
       });

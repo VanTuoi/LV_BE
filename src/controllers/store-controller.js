@@ -99,7 +99,6 @@ const checkManagerStoreStatus = async (req, res) => {
         return res.status(500).json(createResponse(-5, 'Lỗi từ server'));
     }
 };
-
 const getCoffeeStoreByIdManager = async (req, res) => {
     const { M_Id: id } = req.body;
     try {
@@ -114,7 +113,6 @@ const getCoffeeStoreByIdManager = async (req, res) => {
         return res.status(500).json(createResponse(-5, 'Lỗi từ server'));
     }
 };
-
 const createCoffeeStore = async (req, res) => {
 
     const { M_Id: managerId, CS_Name: name, CS_Location: location, CS_Detail: detail,
@@ -147,7 +145,6 @@ const createCoffeeStore = async (req, res) => {
         return res.status(500).json(createResponse(-5, 'Lỗi từ server'));
     }
 }
-
 const updateCoffeeStore = async (req, res) => {
     const { M_Id: manager_Id, CS_Name: name, CS_Location: location, CS_Detail: detail,
         CS_MaxPeople: maxPeople, CS_TimeOpen: timeOpen, CS_TimeClose: timeClose,

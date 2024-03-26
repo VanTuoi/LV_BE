@@ -117,6 +117,47 @@ const findBookingbyIp = async (ip) => {
     }
 };
 
+const findAllBookingbyIdUser = async (id) => {
+    try {
+        const bookingField = await db.Reserve_Ticket.findAll({
+            where: {
+                U_Id: id,
+            },
+            order: [['createdAt', 'DESC']],
+            attributes: ['RT_DateTimeArrival', 'RT_NumberOfParticipants'],
+            include: [
+                {
+                    model: db.Status_Reserve_Ticket,
+                    attributes: ['SRT_Describe', 'createdAt'],
+                    order: [['createdAt', 'DESC']],
+                    limit: 1
+                },
+                {
+                    model: db.Coffee_Store,
+                    attributes: ['CS_Id', 'CS_Name', 'CS_Location'],
+                }
+            ]
+        });
+        let list = []
+        bookingField && bookingField.forEach((item) => {
+            const Info = {
+                CS_Id: item.Coffee_Store.CS_Id,
+                CS_Name: item.Coffee_Store.CS_Name,
+                CS_Location: item.Coffee_Store.CS_Location,
+                RT_DateTimeArrival: item.RT_DateTimeArrival,
+                RT_NumberOfParticipants: item.RT_NumberOfParticipants,
+                SRT_Describe: item.Status_Reserve_Tickets[0].SRT_Describe,
+                RT_TimeCheckIn: item.Status_Reserve_Tickets[0].createdAt
+            };
+            list.push(Info);
+        });
+        return list;
+    } catch (error) {
+        console.error('Error finding all booking field by Id', error);
+        throw error;
+    }
+}
+
 const findLastBookingId = async (userId, storeId) => {
     try {
         const lastBookingId = await db.Reserve_Ticket.max('RT_Id', {
@@ -211,6 +252,8 @@ const createAQrCode = (data) => {
     });
 };
 
+
+
 // ---------------------------------------------------------------Info------------------------------------------------------//
 const findUserById = async (id) => {
     try {
@@ -265,6 +308,85 @@ const changePasswordUser = async (id, newPassword) => {
     }
 };
 
+
+//------------------------------------------------------------------status save Store--------------------------------------------------//
+const findStatusSaveStore = async (idUser, isStore) => {
+    try {
+        const listSave = await db.Favorites_List.findOne({
+            where: { U_Id: idUser, CS_Id: isStore },
+        })
+        return listSave ? true : false;
+    } catch (error) {
+        console.error(`Error finding a save store with id user ${idUser} and store is ${isStore}`, error);
+        return null;
+    }
+}
+const findStatusSaveAllStore = async (idUser) => {
+    try {
+        const favoriteStores = await db.Favorites_List.findAll({
+            where: { U_Id: idUser },
+            attributes: [],
+            include: [{
+                model: db.Coffee_Store,
+                attributes: ['CS_Id', 'CS_Name', 'CS_Location'],
+            }]
+        });
+
+        let list = []
+        favoriteStores && favoriteStores.forEach((item) => {
+            if (item.Coffee_Stores && item.Coffee_Stores.length > 0) {
+                item.Coffee_Stores.forEach((coffeeStore) => {
+                    const coffeeStoreInfo = {
+                        CS_Id: coffeeStore.CS_Id,
+                        CS_Name: coffeeStore.CS_Name,
+                        CS_Location: coffeeStore.CS_Location,
+                    };
+                    list.push(coffeeStoreInfo);
+                });
+            }
+        });
+
+        return list
+    } catch (error) {
+        console.error(`Error when searching favorite store list with user ID ${idUser}`, error);
+        return null;
+    }
+}
+const createSaveStore = async (idUser, isStore) => {
+    try {
+        const listSave = await db.Favorites_List.create({
+            U_Id: idUser,
+            CS_Id: isStore
+        })
+        // console.log(`Successfully save store with id user ${idUser} and store id ${isStore}.`);
+        return listSave;
+    } catch (error) {
+        console.error(`Error create a save store with id user ${idUser} and store is ${isStore}`, error);
+        return null;
+    }
+}
+const deleteSaveStore = async (idUser, isStore) => {
+    try {
+        const result = await db.Favorites_List.destroy({
+            where: {
+                U_Id: idUser,
+                CS_Id: isStore
+            }
+        });
+        if (result === 0) {
+            console.log(`No found store with id user ${idUser} and store id ${isStore} to delete.`);
+            return false;
+        }
+        // console.log(`Successfully deleted save store with id user ${idUser} and store id ${isStore}.`);
+        return true;
+    } catch (error) {
+        console.error(`Error deleting save store with id user ${idUser} and store id ${isStore}`, error);
+        return false;
+    }
+}
+
+
+
 module.exports = {
     // Find
     findBookingbyIp,
@@ -272,8 +394,11 @@ module.exports = {
     findBookingbyId,
     findLatestStatusByTicketId,                      // --> No account
     findTimeCreateLatestStatusByTicketId,           // --> No account
+    findAllBookingbyIdUser,
 
     findUserById,
+    findStatusSaveStore,
+    findStatusSaveAllStore,
     updateInfoUser,
     changePasswordUser,
 
@@ -283,6 +408,7 @@ module.exports = {
     createStatusBooking,
     createAQrCode,
     createBookingRecord,
-
+    createSaveStore,
+    deleteSaveStore,
 
 }
