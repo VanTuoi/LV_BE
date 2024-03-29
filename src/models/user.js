@@ -61,6 +61,13 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     U_Birthday: DataTypes.DATE,
+    U_SpecialRequirements: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      validate: {
+        len: [0, 500]
+      }
+    },
     U_PrestigeScore: {
       type: DataTypes.INTEGER,
       defaultValue: 0

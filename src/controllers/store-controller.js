@@ -78,7 +78,24 @@ const getServicesTheCoffeeStorebyId = async (req, res) => {
 const getTagsTheCoffeeStorebyId = async (req, res) => {
 
 }
+const findStoresByName = async (req, res) => {
+    const name = req.query.store_name;
 
+    try {
+        if (!name) {
+            return res.status(200).json(createResponse(-1, 'Vui lòng nhập tên cửa hàng cần tìm'));
+        }
+        let newRecord = await storeServices.findAllCoffeeStoreByName(name)
+        if (newRecord) {
+            return res.status(200).json(createResponse(0, 'Tìm thấy cửa hàng danh sách cửa hàng', newRecord));
+        } else {
+            return res.status(200).json(createResponse(1, 'Không tìm thấy cửa hàng nào'));
+        }
+    } catch (error) {
+        console.log('Error create the coffee store', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi từ server'));
+    }
+}
 // ----------------------------------------------For Manager---------------------------------------------//
 const checkManagerStoreStatus = async (req, res) => {
     const { M_Id: id } = req.body;
@@ -184,7 +201,7 @@ module.exports = {
     getMenusTheCoffeeStorebyId,
     getServicesTheCoffeeStorebyId,
     getTagsTheCoffeeStorebyId,
-
+    findStoresByName,
     // Manager
     checkManagerStoreStatus,
     getCoffeeStoreByIdManager,

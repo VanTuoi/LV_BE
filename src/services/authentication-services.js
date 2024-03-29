@@ -171,6 +171,7 @@ let createUser = async (name, email, phone, password, gender, birthday, score) =
             U_Name: name,
             U_Password: passwordHash,
             U_PhoneNumber: phone,
+            U_Email: email,
             U_Gender: gender,
             U_Birthday: birthday,
             U_PrestigeScore: score,

@@ -1,4 +1,5 @@
 import db from "../models/index";
+const { Op, literal } = require('sequelize');
 
 //-------------------------------------------- Tìm kiếm --------------------------------//
 const findCoffeeStoreById = async (id) => {
@@ -13,6 +14,19 @@ const findCoffeeStoreById = async (id) => {
         return null;
     }
 };
+const findAllCoffeeStoreByName = async (name) => {
+    try {
+        const coffeeStores = await db.Coffee_Store.findAll({
+            where: literal(`LOWER(CS_Name) LIKE LOWER('%${name}%')`),           // Tìm kiếm hoa và thường
+            attributes: ['CS_Id', 'CS_Name', 'CS_Location', 'CS_MaxPeople', 'CS_TimeOpen', 'CS_TimeClose'],
+        });
+        return coffeeStores;
+    } catch (error) {
+        console.error('Error finding all coffee store :', error);
+        return null;
+    }
+};
+
 
 const findCoffeeStoreDetailById = async (id) => {
     try {
@@ -237,6 +251,7 @@ const updateServicesCoffeeStore = async (id, updatedServicesList) => {
 module.exports = {
     // Find
     findCoffeeStoreById,
+    findAllCoffeeStoreByName,
     findCoffeeStoreDetailById,
     findMenusByCoffeeStoreId,
     findServicesByCoffeeStoreId,

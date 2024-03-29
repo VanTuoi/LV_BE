@@ -33,6 +33,10 @@ module.exports = {
       U_Birthday: {
         type: Sequelize.DATE
       },
+      U_SpecialRequirements: {
+        allowNull: true,
+        type: Sequelize.STRING(500)
+      },
       U_PrestigeScore: {
         type: Sequelize.INTEGER,
         defaultValue: 0

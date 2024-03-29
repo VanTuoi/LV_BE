@@ -1,6 +1,7 @@
 import express from "express";
 const { getTheCoffeeStorebyId, getDetailTheCoffeeStorebyId, getMenusTheCoffeeStorebyId,
-    getServicesTheCoffeeStorebyId, getTagsTheCoffeeStorebyId, checkManagerStoreStatus
+    getServicesTheCoffeeStorebyId, getTagsTheCoffeeStorebyId, checkManagerStoreStatus,
+    findStoresByName
 } = require('../controllers/store-controller');
 
 const { createCoffeeStore, getCoffeeStoreByIdManager, updateCoffeeStore
@@ -9,6 +10,7 @@ const { createCoffeeStore, getCoffeeStoreByIdManager, updateCoffeeStore
 function initStoreRouters() {
     let router = express.Router();
 
+    router.get('/search', findStoresByName);
     router.get('/detail', getDetailTheCoffeeStorebyId);
     router.get('/menus', getMenusTheCoffeeStorebyId);
     router.get('/services', getServicesTheCoffeeStorebyId);

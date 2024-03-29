@@ -224,10 +224,10 @@ const createBookingRecord = async (bookingDate, numberOfParticipants, userIp, us
     }
 };
 
-const createAQrCode = (data) => {
+const createQrCode = (data) => {
     return new Promise((resolve, reject) => {
         let stringdata = JSON.stringify(data);
-
+        console.log('stringdata', stringdata);
         const options = {
             errorCorrectionLevel: 'H', // Mức độ sửa lỗi (L, M, Q, H)
             type: 'image/png', // Định dạng hình ảnh của mã QR
@@ -265,7 +265,7 @@ const findUserById = async (id) => {
     }
 };
 
-const updateInfoUser = async (id, name, phone, email, gender, birthday) => {
+const updateInfoUser = async (id, name, phone, email, gender, birthday, specialRequirements) => {
     try {
         const user = await db.User.findByPk(id);
 
@@ -278,6 +278,7 @@ const updateInfoUser = async (id, name, phone, email, gender, birthday) => {
         user.U_Email = email;
         user.U_Gender = gender;
         user.U_Birthday = birthday;
+        user.U_SpecialRequirements = specialRequirements;
 
         await user.save(); // Save the changes to the database
         return user;
@@ -406,7 +407,7 @@ module.exports = {
     checkTimeTicket,
 
     createStatusBooking,
-    createAQrCode,
+    createQrCode,
     createBookingRecord,
     createSaveStore,
     deleteSaveStore,

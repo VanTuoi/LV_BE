@@ -13,7 +13,7 @@ const scheduleBooking = async (req, res) => {
     try {
         await delay(200);
 
-        const { manager_Id: manager_Id, month: month } = req.body;
+        const { M_Id: manager_Id, month: month } = req.body;
         const store = await storeServices.findCoffeeStoreById(manager_Id)
 
         if (!store) {
@@ -78,13 +78,13 @@ const createAHoliday = async (req, res) => {
 
 const checkIn = async (req, res) => {
 
-    const { manager_Id: manager_Id, RT_Id: RT_Id } = req.body;
+    const { M_Id: manager_Id, RT_Id: RT_Id } = req.body;
 
-    console.log('RT_Id', RT_Id);
+    // console.log('RT_Id', RT_Id);
     if (!RT_Id || !manager_Id) {
         return res.status(201).json(createResponse(-1, 'Dữ liệu check in không đủ', null));
     }
-    const store = await storeServices.findCoffeeStoreById(manager_Id)
+    const store = await storeServices.findCoffeeStoreByIdManager(manager_Id)
 
     if (!store) {
         return res.status(200).json(createResponse(0, 'Không tìm thấy cửa hàng từ ID manager'));
@@ -95,7 +95,7 @@ const checkIn = async (req, res) => {
         const status = await userServices.findLatestStatusByTicketId(RT_Id);
         const timeCheckIn = await userServices.findTimeCreateLatestStatusByTicketId(RT_Id);
 
-        console.log('check in', status, timeCheckIn, timeDifferenceInMinutes);
+        // console.log('check in', status, timeCheckIn, timeDifferenceInMinutes);
 
         if (!status || !timeDifferenceInMinutes) {
             return res.status(200).json(createResponse(0, 'Không tìm thấy thông tin đặt bàn', null));

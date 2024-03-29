@@ -48,7 +48,7 @@ const createABooking = async (req, res) => {
             if (newRecord) {
                 const ID_lastBokking = await userServices.findBookingbyIp(ip);
                 userServices.createStatusBooking(ID_lastBokking, 'Waiting');
-                const qr = await userServices.createAQrCode({ CS_Id: ID_lastBokking });
+                const qr = await userServices.createQrCode({ RT_Id: ID_lastBokking });
                 return res.status(200).json(createResponse(0, 'Bạn đã đặt bàn thành công', qr));
             } else {
                 return res.status(200).json(createResponse(-1, 'Đặt bàn không thành công', null));
@@ -62,7 +62,7 @@ const createABooking = async (req, res) => {
             if (newRecord) {
                 const ID_lastBokking = await userServices.findLastBookingId(userID, storeID);
                 userServices.createStatusBooking(ID_lastBokking, 'Waiting');
-                const qr = await userServices.createAQrCode({ CS_Id: ID_lastBokking });
+                const qr = await userServices.createQrCode({ RT_Id: ID_lastBokking });
                 return res.status(200).json(createResponse(0, 'Bạn đã đặt bàn thành công', qr));
             } else {
                 return res.status(200).json(createResponse(-1, 'Đặt bàn không thành công', null));
@@ -113,11 +113,11 @@ const getInforUser = async (req, res) => {
 }
 const updateInfo = async (req, res) => {
     try {
-        const { U_Name: name, U_Id: id, U_Email: email, U_PhoneNumber: phone, U_Gender: gender, U_Birthday: birthday } = req.body;
+        const { U_Name: name, U_Id: id, U_Email: email, U_PhoneNumber: phone, U_Gender: gender, U_SpecialRequirements: specialRequirements, U_Birthday: birthday } = req.body;
 
         // console.log('', id, name, email, phone, gender, birthday);
 
-        if (!name || !id || !email || !phone || !gender) {
+        if (!name || !id || !email || !phone || !gender || !specialRequirements) {
             return res.status(201).json(createResponse(-1, 'Dữ liệu cập nhật người dùng không đủ', null));
         }
         let haveUser = await userServices.findUserById(id)
@@ -125,7 +125,7 @@ const updateInfo = async (req, res) => {
         if (!haveUser) {
             return res.status(200).json(createResponse(-2, 'Không tìm thấy người dùng', null));
         }
-        let user = await userServices.updateInfoUser(id, name, phone, email, gender, birthday)
+        let user = await userServices.updateInfoUser(id, name, phone, email, gender, birthday, specialRequirements)
 
         if (user) {
             return res.status(200).json(createResponse(0, 'Cập nhật thành công', user));
@@ -176,9 +176,9 @@ const statusSaveStore = async (req, res) => {
         let isSave = await userServices.findStatusSaveStore(id, CS_Id)
 
         if (isSave) {
-            return res.status(200).json(createResponse(0, 'Đã lưu cửa hàng'));
+            return res.status(200).json(createResponse(0, 'Đây là cửa hàng yêu thích của bạn'));
         } else {
-            return res.status(200).json(createResponse(1, 'Chưa lưu cửa hàng'));
+            return res.status(200).json(createResponse(1, 'Đây không là cửa hàng yêu thích của bạn'));
         }
 
     } catch (error) {
