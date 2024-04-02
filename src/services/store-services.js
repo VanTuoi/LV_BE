@@ -14,6 +14,7 @@ const findCoffeeStoreById = async (id) => {
         return null;
     }
 };
+
 const findAllCoffeeStoreByName = async (name) => {
     try {
         const coffeeStores = await db.Coffee_Store.findAll({
@@ -26,7 +27,6 @@ const findAllCoffeeStoreByName = async (name) => {
         return null;
     }
 };
-
 
 const findCoffeeStoreDetailById = async (id) => {
     try {
@@ -95,7 +95,7 @@ const findCoffeeStoreIdByManagerId = async (managerId) => {
         const coffeeStore = await db.Coffee_Store.findOne({
             where: { M_Id: managerId }
         });
-        console.log('find ID coffee', coffeeStore && coffeeStore.CS_Id);
+        // console.log('find ID coffee', coffeeStore && coffeeStore.CS_Id);
         return coffeeStore ? coffeeStore.CS_Id : null;
     } catch (error) {
         console.error('Error finding store ID by manager ID:', error);
@@ -103,8 +103,61 @@ const findCoffeeStoreIdByManagerId = async (managerId) => {
     }
 };
 
+let findReserveTicketToMonth = async (month, id) => {
+    try {
+        const startDate = new Date(+month);
+        startDate.setDate(1);
+        const endDate = new Date(+month);
+        endDate.setMonth(endDate.getMonth() + 1);
 
-//----------------------------------------------- Tạo mới-----------------------------------------//
+        const newRecord = await db.Reserve_Ticket.findAll({
+            where: {
+                CS_Id: id,
+                RT_DateTimeArrival: {
+                    [Op.between]: [startDate, endDate]
+                }
+            },
+            // include: 'User',
+            include: [{
+                model: db.Coffee_Store,
+                attributes: ['CS_Name']
+            }],
+        });
+        return newRecord;
+
+    } catch (error) {
+        console.error(`Error finding reserve ticke at store id: ${id} to month records:`, error);
+        return null
+    }
+}
+
+let findAllHolidayToMonth = async (month) => {
+    try {
+
+        const startDate = new Date(+month);
+        startDate.setDate(1);   // ngày bắt đầu của tháng
+
+        const endDate = new Date(startDate);
+        endDate.setMonth(startDate.getMonth() + 1);
+        endDate.setDate(0);     // ngày kết thúc của tháng
+
+        const listHoliday = await db.Activity_Schedule.findAll({
+            where: {
+                AS_Holiday: {
+                    [Op.between]: [startDate, endDate]
+                }
+            },
+            attributes: ['AS_Holiday']
+        });
+
+        return listHoliday;
+    } catch (error) {
+        console.error('Error getting holiday list:', error);
+        return [];
+    }
+}
+
+//------------------------------------- Tạo mới-----------------------------------------//
 
 const createCoffeeStore = async (id, name, location, detail, maxPeople, timeOpen, timeClose) => {
     try {
@@ -161,6 +214,20 @@ const createServicesFromList = async (store_Id, listServices) => {
     }
 };
 
+let createHoLiday = async (AS_Holiday, CS_Id) => {
+    try {
+        const newRecord = await db.Activity_Schedule.create({
+            AS_Holiday: AS_Holiday,
+            CS_Id: CS_Id
+        })
+        return newRecord ? true : null
+    } catch (error) {
+        console.error('Error creating Activity Schedule record:', error);
+    }
+}
+
+
+//--------------------------------------Cập nhật----------------------------------------------//
 const updateCoffeeStoreRecord = async (id, name, location, maxPeople, timeOpen, timeClose, detail) => {
     try {
         // Tìm cửa hàng cà phê bằng ID
@@ -258,6 +325,10 @@ module.exports = {
     findTagsByCoffeeStoreId,
     findCoffeeStoreByIdManager,
     findCoffeeStoreIdByManagerId,
+    findReserveTicketToMonth,
+    findAllHolidayToMonth,
+    createHoLiday,
+
     // Create
     createCoffeeStore,
     createMenusFromList,
@@ -266,5 +337,5 @@ module.exports = {
     // update
     updateCoffeeStoreRecord,
     updateMenusCoffeeStore,
-    updateServicesCoffeeStore
+    updateServicesCoffeeStore,
 }

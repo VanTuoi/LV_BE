@@ -1,8 +1,8 @@
 import storeServices from '../services/store-services'
 import createResponse from '../helpers/responseHelper';
-import db from "../models/index";
 
-const getTheCoffeeStorebyId = async (req, res) => {
+//--------------------------------------------- Tìm kiếm----------------------------------------------//
+const getCoffeeStorebyId = async (req, res) => {
 
     const id = req.params.id;
 
@@ -17,11 +17,12 @@ const getTheCoffeeStorebyId = async (req, res) => {
             return res.status(200).json(createResponse(1, 'Không tìm thấy cửa hàng'));
         }
     } catch (error) {
-        console.log('Error create the coffee store', error);
-        return res.status(500).json(createResponse(-5, 'Lỗi từ server'));
+        console.log('Lỗi tìm cửa hàng theo id', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi tìm cửa hàng theo id'));
     }
 }
-const getDetailTheCoffeeStorebyId = async (req, res) => {
+
+const getDetailCoffeeStorebyId = async (req, res) => {
     const { CS_Id: id } = req.query;
 
     try {
@@ -35,11 +36,12 @@ const getDetailTheCoffeeStorebyId = async (req, res) => {
             return res.status(200).json(createResponse(1, 'Không tìm thấy chi tiết giới thiệu'));
         }
     } catch (error) {
-        console.log('Error create the coffee store', error);
-        return res.status(500).json(createResponse(-5, 'Lỗi từ server'));
+        console.log('Lỗi tìm trang giới thiệu cửa hàng', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi tìm trang giới thiệu cửa hàng'));
     }
 }
-const getMenusTheCoffeeStorebyId = async (req, res) => {
+
+const getMenusCoffeeStorebyId = async (req, res) => {
     const { CS_Id: id } = req.query;
 
     try {
@@ -53,11 +55,12 @@ const getMenusTheCoffeeStorebyId = async (req, res) => {
             return res.status(200).json(createResponse(1, 'Không tìm thấy menu'));
         }
     } catch (error) {
-        console.log('Error create the coffee store', error);
-        return res.status(500).json(createResponse(-5, 'Lỗi từ server'));
+        console.log('Lỗi tìm menu cửa hàng', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi tìm menu cửa hàng'));
     }
 }
-const getServicesTheCoffeeStorebyId = async (req, res) => {
+
+const getServicesCoffeeStorebyId = async (req, res) => {
 
     const { CS_Id: id } = req.query;
     try {
@@ -71,14 +74,17 @@ const getServicesTheCoffeeStorebyId = async (req, res) => {
             return res.status(200).json(createResponse(1, 'Không tìm thấy services'));
         }
     } catch (error) {
-        console.log('Error find services the coffee store', error);
-        return res.status(500).json(createResponse(-5, 'Lỗi từ server'));
+        console.log('Lỗi tìm dịch vụ cửa hàng', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi tìm dịch vụ cửa hàng'));
     }
 }
-const getTagsTheCoffeeStorebyId = async (req, res) => {
+
+const getTagsCoffeeStorebyId = async (req, res) => {
 
 }
-const findStoresByName = async (req, res) => {
+
+const getStoresByName = async (req, res) => {
+
     const name = req.query.store_name;
 
     try {
@@ -92,121 +98,16 @@ const findStoresByName = async (req, res) => {
             return res.status(200).json(createResponse(1, 'Không tìm thấy cửa hàng nào'));
         }
     } catch (error) {
-        console.log('Error create the coffee store', error);
-        return res.status(500).json(createResponse(-5, 'Lỗi từ server'));
-    }
-}
-// ----------------------------------------------For Manager---------------------------------------------//
-const checkManagerStoreStatus = async (req, res) => {
-    const { M_Id: id } = req.body;
-    try {
-        if (!id) {
-            return res.status(200).json(createResponse(-1, 'Vui lòng nhập đủ thông tin ID người quản lý'));
-        }
-
-        const storeFound = await storeServices.findCoffeeStoreIdByManagerId(id);
-
-        if (storeFound) {
-            return res.status(200).json(createResponse(0, 'Người quản lý đã liên kết với cửa hàng', storeFound.CS_Id));
-        } else {
-            return res.status(200).json(createResponse(1, 'Người quản lý chưa liên kết với cửa hàng nào', null));
-        }
-    } catch (error) {
-        console.error('Lỗi khi kiểm tra trạng thái cửa hàng của người quản lý:', error);
-        return res.status(500).json(createResponse(-5, 'Lỗi từ server'));
-    }
-};
-const getCoffeeStoreByIdManager = async (req, res) => {
-    const { M_Id: id } = req.body;
-    try {
-        if (!id) return res.status(200).json(createResponse(-1, 'Vui lòng nhập đủ thông tin Id'));
-
-        const coffeeStore = await storeServices.findCoffeeStoreByIdManager(id);
-
-        if (coffeeStore) return res.status(200).json(createResponse(0, 'Tìm thấy', coffeeStore));
-        return res.status(200).json(createResponse(1, 'Không tìm thấy'));
-    } catch (error) {
-        console.error('Lỗi khi tìm kiếm cửa hàng cà phê:', error);
-        return res.status(500).json(createResponse(-5, 'Lỗi từ server'));
-    }
-};
-const createCoffeeStore = async (req, res) => {
-
-    const { M_Id: managerId, CS_Name: name, CS_Location: location, CS_Detail: detail,
-        CS_MaxPeople: maxPeople, CS_TimeOpen: timeOpen, CS_TimeClose: timeClose,
-        CS_ListMenus: listMenu, CS_ListServices: listServices
-    } = req.body;
-    console.log('', managerId, name, location, detail, maxPeople, timeOpen, timeClose);
-    try {
-        if (!managerId || !name || !location || !detail || !listMenu || !listServices) {
-            return res.status(200).json(createResponse(-1, 'Vui lòng nhập đủ thông tin'));
-        }
-
-        await db.sequelize.transaction(async (t) => {
-
-            let coffeeStoreId = await storeServices.findCoffeeStoreIdByManagerId(managerId, t);
-
-            if (coffeeStoreId) {
-                return res.status(200).json(createResponse(0, 'Bạn đã quản lý 1 cửa hàng', { have: true }));
-            }
-
-            await storeServices.createCoffeeStore(managerId, name, location, detail, maxPeople, timeOpen, timeClose, t);
-            coffeeStoreId = await storeServices.findCoffeeStoreIdByManagerId(managerId, t);
-            await storeServices.createMenusFromList(coffeeStoreId, listMenu, t);
-            await storeServices.createServicesFromList(coffeeStoreId, listServices, t);
-
-            return res.status(200).json(createResponse(0, 'Tạo thành công', true));
-        });
-    } catch (error) {
-        console.error('Error creating the coffee store with menus and services from Controller:', error);
-        return res.status(500).json(createResponse(-5, 'Lỗi từ server'));
-    }
-}
-const updateCoffeeStore = async (req, res) => {
-    const { M_Id: manager_Id, CS_Name: name, CS_Location: location, CS_Detail: detail,
-        CS_MaxPeople: maxPeople, CS_TimeOpen: timeOpen, CS_TimeClose: timeClose,
-        CS_ListMenus: menus, CS_ListServices: services
-    } = req.body;
-
-    try {
-        if (!manager_Id || !name && !location && !detail && !menus && !services) {
-            return res.status(200).json(createResponse(-1, 'Thiếu dữ liệu'));
-        }
-        let id = await storeServices.findCoffeeStoreIdByManagerId(manager_Id)
-
-        if (!id) {
-            return res.status(200).json(createResponse(2, 'Bạn chưa quản lý cửa hàng nào', null));
-        }
-
-        await storeServices.updateCoffeeStoreRecord(id, name, location, maxPeople, timeOpen, timeClose, detail);
-
-        if (menus) {
-            await storeServices.updateMenusCoffeeStore(id, menus);
-        }
-        if (services) {
-            await storeServices.updateServicesCoffeeStore(id, services);
-        }
-
-        return res.status(200).json(createResponse(0, 'Cập nhật thành công'));
-
-    } catch (error) {
-        console.log('Error update the coffee store', error);
-        return res.status(500).json(createResponse(-5, 'Lỗi từ server'));
+        console.log('Lỗi tìm cửa hàng theo tên', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi tìm cửa hàng theo tên'));
     }
 }
 
 module.exports = {
-    getTheCoffeeStorebyId,
-    getDetailTheCoffeeStorebyId,
-    getMenusTheCoffeeStorebyId,
-    getServicesTheCoffeeStorebyId,
-    getTagsTheCoffeeStorebyId,
-    findStoresByName,
-    // Manager
-    checkManagerStoreStatus,
-    getCoffeeStoreByIdManager,
-
-    createCoffeeStore,
-
-    updateCoffeeStore
+    getCoffeeStorebyId,
+    getDetailCoffeeStorebyId,
+    getMenusCoffeeStorebyId,
+    getServicesCoffeeStorebyId,
+    getTagsCoffeeStorebyId,
+    getStoresByName,
 }

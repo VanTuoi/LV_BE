@@ -3,11 +3,12 @@ import jwt from 'jsonwebtoken';
 const bcrypt = require('bcrypt');
 
 let salt = bcrypt.genSaltSync(10);
-//---------------------------------------------PW--------------------------
+//---------------------------------------------Password------------------------------//
 const handlehashPassword = async (password) => {
     let hashPassword = bcrypt.hashSync(password, salt)
     return hashPassword;
 }
+
 const comparePassword = async (inputPassword, hashedPassword) => {
     try {
         const isMatch = await bcrypt.compare(inputPassword, hashedPassword);
@@ -17,6 +18,8 @@ const comparePassword = async (inputPassword, hashedPassword) => {
         throw error;
     }
 };
+
+
 //---------------------------------------------Find-----------------------------------//
 let findPhoneUser = async (phone) => {
     try {
@@ -158,12 +161,8 @@ const findLatestStatusByManagerId = async (id) => {
         return null;
     }
 };
-//-------------------------------------------------------------Check have manager---------------//
-const checkIsManager = async (id) => {
 
-}
-
-//--------------------------------------------------------- Create------------------------------//
+//----------------------------------------- Create------------------------------//
 let createUser = async (name, email, phone, password, gender, birthday, score) => {
     try {
         let passwordHash = await handlehashPassword(password)
@@ -183,6 +182,7 @@ let createUser = async (name, email, phone, password, gender, birthday, score) =
         return null
     }
 }
+
 let createManager = async (name, email, phone, password, gender, birthday) => {
     try {
         let passwordHash = await handlehashPassword(password)
@@ -201,6 +201,7 @@ let createManager = async (name, email, phone, password, gender, birthday) => {
         return null
     }
 }
+
 const createStatusUser = async (id, status) => {
     try {
         const newRecord = await db.Status_User.create({
@@ -213,6 +214,7 @@ const createStatusUser = async (id, status) => {
         return null
     }
 };
+
 const createStatusManager = async (id, status) => {
     try {
         const newRecord = await db.Status_Manager.create({
@@ -227,7 +229,7 @@ const createStatusManager = async (id, status) => {
 };
 
 module.exports = {
-    //
+
     comparePassword,
     // Find
     findPhoneUser,
@@ -246,7 +248,6 @@ module.exports = {
     createManager,
     createStatusUser,
     createStatusManager,
-    // Update
 
 }
 

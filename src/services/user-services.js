@@ -5,256 +5,12 @@ import { creatJWT } from '../middleware/authentication'
 const bcrypt = require('bcrypt');
 
 let salt = bcrypt.genSaltSync(10);
-//---------------------------------------------PW--------------------------
+//-----------------------------------------Password--------------------------
 const handlehashPassword = async (password) => {
     let hashPassword = bcrypt.hashSync(password, salt)
     return hashPassword;
 }
-
-// ----------------------------------------Booking ---------------------------------------------------------//
-const createStatusBooking = async (Reserve_Ticket_ID, status) => {
-    try {
-        const newRecord = await db.Status_Reserve_Ticket.create({
-            RT_Id: Reserve_Ticket_ID,
-            SRT_Describe: status,
-        });
-        return newRecord.updatedAt;
-    } catch (error) {
-        console.error('Error creating booking record:', error);
-        return null
-    }
-};
-
-const checkTimeTicket = async (Reserve_Ticket_ID) => {
-    try {
-        let record = await findBookingbyId(Reserve_Ticket_ID)
-        if (record) {
-            let timeArrival = new Date(record.RT_DateTimeArrival)
-            const currentTime = new Date();
-            const timeDifference = timeArrival.getTime() - currentTime.getTime();
-            const timeDifferenceInMinutes = timeDifference / (1000 * 60);
-            // console.log('timeDifferenceInMinutes', timeDifferenceInMinutes);
-            return timeDifferenceInMinutes
-        } else {
-            return null
-        }
-
-    } catch (error) {
-        console.error('Error check time ticket:', error);
-        return null;
-    }
-}
-
-const findLatestStatusByTicketId = async (Reserve_Ticket_ID) => {
-    try {
-        const latestStatusRecord = await db.Status_Reserve_Ticket.findOne({
-            where: { RT_Id: Reserve_Ticket_ID },
-            order: [['createdAt', 'DESC']]
-        })
-
-        console.log('latestStatusRecord', latestStatusRecord);
-        if (!latestStatusRecord) {
-            console.log('No status found for the given ticket ID');
-            return null;
-        }
-
-        return latestStatusRecord.dataValues.SRT_Describe;
-    } catch (error) {
-        console.error('Error finding the latest status record:', error);
-        return null;
-    }
-};
-
-const findTimeCreateLatestStatusByTicketId = async (Reserve_Ticket_ID) => {
-    try {
-        const latestStatusRecord = await db.Status_Reserve_Ticket.findOne({
-            where: { RT_Id: Reserve_Ticket_ID },
-            order: [['createdAt', 'DESC']] // Sắp xếp giảm dần dựa vào trường createdAt
-        });
-        // console.log('latestStatusRecord', latestStatusRecord);
-        if (!latestStatusRecord) {
-            console.log('No status found for the given ticket ID');
-            return null;
-        }
-
-        return latestStatusRecord.dataValues.updatedAt;
-    } catch (error) {
-        console.error('Error finding the latest status record:', error);
-        return null;
-    }
-};
-
-const findBookingbyId = async (Id) => {
-    try {
-        const bookingbyId = await db.Reserve_Ticket.findOne({
-            where: {
-                RT_Id: Id,
-            },
-            include: [{
-                model: db.User,
-                attributes: ['U_Name']
-            }]
-        });
-        // console.log('booking', bookingbyId);
-        return bookingbyId || null;
-    } catch (error) {
-        console.error('Error finding last booking', error);
-        throw error;
-    }
-};
-
-const findBookingbyIp = async (ip) => {
-    try {
-        const bookingField = await db.Reserve_Ticket.findOne({
-            where: {
-                RT_Ip: ip,
-            },
-        });
-        return bookingField ? bookingField.dataValues.RT_Id : null;
-    } catch (error) {
-        console.error('Error finding booking field by IP', error);
-        throw error;
-    }
-};
-
-const findAllBookingbyIdUser = async (id) => {
-    try {
-        const bookingField = await db.Reserve_Ticket.findAll({
-            where: {
-                U_Id: id,
-            },
-            order: [['createdAt', 'DESC']],
-            attributes: ['RT_DateTimeArrival', 'RT_NumberOfParticipants'],
-            include: [
-                {
-                    model: db.Status_Reserve_Ticket,
-                    attributes: ['SRT_Describe', 'createdAt'],
-                    order: [['createdAt', 'DESC']],
-                    limit: 1
-                },
-                {
-                    model: db.Coffee_Store,
-                    attributes: ['CS_Id', 'CS_Name', 'CS_Location'],
-                }
-            ]
-        });
-        let list = []
-        bookingField && bookingField.forEach((item) => {
-            const Info = {
-                CS_Id: item.Coffee_Store.CS_Id,
-                CS_Name: item.Coffee_Store.CS_Name,
-                CS_Location: item.Coffee_Store.CS_Location,
-                RT_DateTimeArrival: item.RT_DateTimeArrival,
-                RT_NumberOfParticipants: item.RT_NumberOfParticipants,
-                SRT_Describe: item.Status_Reserve_Tickets[0].SRT_Describe,
-                RT_TimeCheckIn: item.Status_Reserve_Tickets[0].createdAt
-            };
-            list.push(Info);
-        });
-        return list;
-    } catch (error) {
-        console.error('Error finding all booking field by Id', error);
-        throw error;
-    }
-}
-
-const findLastBookingId = async (userId, storeId) => {
-    try {
-        const lastBookingId = await db.Reserve_Ticket.max('RT_Id', {
-            where: {
-                U_Id: userId,
-                CS_Id: storeId
-            }
-        });
-        // console.log('Last booking ID:', lastBookingId);
-        return lastBookingId || null;
-    } catch (error) {
-        console.error('Error finding last booking ID:', error);
-        throw error;
-    }
-};
-
-const checkBookingCondition = async (bookingTime, userId, ip, storeId) => {
-    try {
-        const startTime = new Date(bookingTime - (2 * 60 * 60 * 100 + 60 * 1000)); // Thời gian bắt đầu (bookingTime)
-        const endTime = new Date(bookingTime + (2 * 60 * 60 * 1000 - 60 * 1000)); // Thời gian kết thúc (2 giờ sau bookingTime)
-
-        // Tìm xem có bất kỳ đặt bàn nào trong khoảng thời gian từ startTime đến endTime không
-        const bookingCount = await db.Reserve_Ticket.count({
-            where: {
-                [Op.or]: [
-                    {
-                        U_Id: userId,
-                        CS_Id: storeId,
-                        RT_DateTimeArrival: {
-                            [Op.between]: [startTime, endTime]
-                        }
-                    },
-                    {
-                        RT_Ip: ip,
-                        CS_Id: storeId,
-                        RT_DateTimeArrival: {
-                            [Op.between]: [startTime, endTime]
-                        }
-                    }
-                ]
-            }
-        });
-        // Trả về true nếu không có đặt bàn nào trong khoảng thời gian đó, ngược lại trả về false
-        return bookingCount === 0;
-    } catch (error) {
-        console.error('Error checkIng booking condition:', error);
-        throw error;
-    }
-};
-
-const createBookingRecord = async (bookingDate, numberOfParticipants, userIp, userId, storeId) => {
-    try {
-        const newRecord = await db.Reserve_Ticket.create({
-            RT_DateTimeArrival: bookingDate,
-            RT_NumberOfParticipants: numberOfParticipants,
-            RT_Ip: userIp,
-            U_Id: userId,
-            CS_Id: storeId
-        });
-        return newRecord;
-    } catch (error) {
-        console.error('Error creating booking record:', error);
-        throw error;
-    }
-};
-
-const createQrCode = (data) => {
-    return new Promise((resolve, reject) => {
-        let stringdata = JSON.stringify(data);
-        console.log('stringdata', stringdata);
-        const options = {
-            errorCorrectionLevel: 'H', // Mức độ sửa lỗi (L, M, Q, H)
-            type: 'image/png', // Định dạng hình ảnh của mã QR
-            quality: 1, // Chất lượng hình ảnh (0-1)
-            margin: 1, // Khoảng cách lề (đơn vị: module)
-            color: {
-                dark: '#000000', // Màu cho phần module
-                light: '#ffffff' // Màu cho phần nền
-            },
-            width: 350, // Kích thước của mã QR (đơn vị: pixel)
-            height: 350
-        };
-        QRCode.toDataURL(stringdata, options, function (err, code) {
-            if (err) {
-                console.log('Error:', err);
-                reject(err);
-            } else {
-                // console.log('QR Code:', code);
-                resolve(code);
-            }
-        });
-    });
-};
-
-
-
-// ---------------------------------------------------------------Info------------------------------------------------------//
+// -------------------------------------------------------------Account------------------------------------------------------//
 const findUserById = async (id) => {
     try {
         const user = await db.User.findByPk(id)
@@ -265,7 +21,7 @@ const findUserById = async (id) => {
     }
 };
 
-const updateInfoUser = async (id, name, phone, email, gender, birthday, specialRequirements) => {
+const updateInforUser = async (id, name, phone, email, gender, birthday, specialRequirements) => {
     try {
         const user = await db.User.findByPk(id);
 
@@ -310,7 +66,301 @@ const changePasswordUser = async (id, newPassword) => {
 };
 
 
-//------------------------------------------------------------------status save Store--------------------------------------------------//
+// ----------------------------------------Booking ---------------------------------------------------------//
+const checkTimeReserveTicket = async (Reserve_Ticket_ID) => {
+    try {
+        let record = await findReserveTicketbyId(Reserve_Ticket_ID)
+        if (record) {
+            let timeArrival = new Date(record.RT_DateTimeArrival)
+            const currentTime = new Date();
+            const timeDifference = timeArrival.getTime() - currentTime.getTime();
+            const timeDifferenceInMinutes = timeDifference / (1000 * 60);
+            // console.log('timeDifferenceInMinutes', timeDifferenceInMinutes);
+            return timeDifferenceInMinutes
+        } else {
+            return null
+        }
+
+    } catch (error) {
+        console.error('Error check time ticket:', error);
+        return null;
+    }
+}
+
+const checkBookingCondition = async (bookingTime, userId, ip, storeId) => {
+    try {
+        const startTime = new Date(bookingTime - (2 * 60 * 60 * 100 + 60 * 1000)); // Thời gian bắt đầu (bookingTime)
+        const endTime = new Date(bookingTime + (2 * 60 * 60 * 1000 - 60 * 1000)); // Thời gian kết thúc (2 giờ sau bookingTime)
+
+        // Tìm xem có bất kỳ đặt bàn nào trong khoảng thời gian từ startTime đến endTime không
+        const bookingCount = await db.Reserve_Ticket.count({
+            where: {
+                [Op.or]: [
+                    {
+                        U_Id: userId,
+                        CS_Id: storeId,
+                        RT_DateTimeArrival: {
+                            [Op.between]: [startTime, endTime]
+                        }
+                    },
+                    {
+                        RT_Ip: ip,
+                        CS_Id: storeId,
+                        RT_DateTimeArrival: {
+                            [Op.between]: [startTime, endTime]
+                        }
+                    }
+                ]
+            }
+        });
+        // Trả về true nếu không có đặt bàn nào trong khoảng thời gian đó, ngược lại trả về false
+        return bookingCount === 0;
+    } catch (error) {
+        console.error('Error checkIng booking condition:', error);
+        throw error;
+    }
+};
+
+const findLatestStatusByReserveTicketId = async (Reserve_Ticket_ID) => {
+    try {
+        const latestStatusRecord = await db.Status_Reserve_Ticket.findOne({
+            where: { RT_Id: Reserve_Ticket_ID },
+            order: [['createdAt', 'DESC']]
+        })
+
+        console.log('latestStatusRecord', latestStatusRecord);
+        if (!latestStatusRecord) {
+            console.log('No status found for the given ticket ID');
+            return null;
+        }
+
+        return latestStatusRecord.dataValues.SRT_Describe;
+    } catch (error) {
+        console.error('Error finding the latest status record:', error);
+        return null;
+    }
+};
+
+const findTimeCreateLatestStatusByTicketId = async (Reserve_Ticket_ID) => {
+    try {
+        const latestStatusRecord = await db.Status_Reserve_Ticket.findOne({
+            where: { RT_Id: Reserve_Ticket_ID },
+            order: [['createdAt', 'DESC']] // Sắp xếp giảm dần dựa vào trường createdAt
+        });
+        // console.log('latestStatusRecord', latestStatusRecord);
+        if (!latestStatusRecord) {
+            console.log('No status found for the given ticket ID');
+            return null;
+        }
+
+        return latestStatusRecord.dataValues.updatedAt;
+    } catch (error) {
+        console.error('Error finding the latest status record:', error);
+        return null;
+    }
+};
+
+const findReserveTicketbyId = async (Id) => {
+    try {
+        const bookingbyId = await db.Reserve_Ticket.findOne({
+            where: {
+                RT_Id: Id,
+            },
+            include: [{
+                model: db.User,
+                attributes: ['U_Name']
+            }]
+        });
+        // console.log('booking', bookingbyId);
+        return bookingbyId || null;
+    } catch (error) {
+        console.error('Error finding last booking', error);
+        throw error;
+    }
+};
+
+const findReserveTicketbyIp = async (ip) => {
+    try {
+        const bookingField = await db.Reserve_Ticket.findOne({
+            where: {
+                RT_Ip: ip,
+            },
+        });
+        return bookingField ? bookingField.dataValues.RT_Id : null;
+    } catch (error) {
+        console.error('Error finding booking field by IP', error);
+        throw error;
+    }
+};
+
+const findAllReserveTicketbyIdUser = async (id) => {
+    try {
+        const bookingField = await db.Reserve_Ticket.findAll({
+            where: {
+                U_Id: id,
+            },
+            order: [['createdAt', 'DESC']],
+            attributes: ['RT_DateTimeArrival', 'RT_NumberOfParticipants'],
+            include: [
+                {
+                    model: db.Status_Reserve_Ticket,
+                    attributes: ['SRT_Describe', 'createdAt'],
+                    order: [['createdAt', 'DESC']],
+                    limit: 1
+                },
+                {
+                    model: db.Coffee_Store,
+                    attributes: ['CS_Id', 'CS_Name', 'CS_Location'],
+                }
+            ]
+        });
+        let list = []
+        bookingField && bookingField.forEach((item) => {
+            const Info = {
+                CS_Id: item.Coffee_Store.CS_Id,
+                CS_Name: item.Coffee_Store.CS_Name,
+                CS_Location: item.Coffee_Store.CS_Location,
+                RT_DateTimeArrival: item.RT_DateTimeArrival,
+                RT_NumberOfParticipants: item.RT_NumberOfParticipants,
+                SRT_Describe: item.Status_Reserve_Tickets[0].SRT_Describe,
+                RT_TimeCheckIn: item.Status_Reserve_Tickets[0].createdAt
+            };
+            list.push(Info);
+        });
+        return list;
+    } catch (error) {
+        console.error('Error finding all booking field by Id', error);
+        throw error;
+    }
+}
+
+const findAllReserveTicketTodaybyIdUser = async (id) => {
+
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    try {
+        const bookingField = await db.Reserve_Ticket.findAll({
+            where: {
+                U_Id: id,
+                RT_DateTimeArrival: {
+                    [Op.between]: [startOfDay, endOfDay],
+                },
+            },
+            order: [['createdAt', 'ASC']],
+            attributes: ['RT_DateTimeArrival', 'RT_NumberOfParticipants'],
+            include: [
+                {
+                    model: db.Status_Reserve_Ticket,
+                    // where: { SRT_Describe: 'Waiting' },
+                    attributes: ['SRT_Describe', 'createdAt'],
+                    order: [['createdAt', 'DESC']],
+                    limit: 1
+                },
+                {
+                    model: db.Coffee_Store,
+                    attributes: ['CS_Id', 'CS_Name', 'CS_Location'],
+                }
+            ]
+        });
+        let list = []
+        bookingField && bookingField.forEach((item) => {
+            const Info = {
+                CS_Id: item.Coffee_Store.CS_Id,
+                CS_Name: item.Coffee_Store.CS_Name,
+                CS_Location: item.Coffee_Store.CS_Location,
+                RT_DateTimeArrival: item.RT_DateTimeArrival,
+                RT_NumberOfParticipants: item.RT_NumberOfParticipants,
+                SRT_Describe: item.Status_Reserve_Tickets[0].SRT_Describe,
+            };
+            list.push(Info);
+        });
+        return list;
+    } catch (error) {
+        console.error('Error finding all booking to day field by Id', error);
+        throw error;
+    }
+}
+
+const findLastReserveTicketId = async (userId, storeId) => {
+    try {
+        const lastBookingId = await db.Reserve_Ticket.max('RT_Id', {
+            where: {
+                U_Id: userId,
+                CS_Id: storeId
+            }
+        });
+        // console.log('Last booking ID:', lastBookingId);
+        return lastBookingId || null;
+    } catch (error) {
+        console.error('Error finding last booking ID:', error);
+        throw error;
+    }
+};
+
+const createReserveTicket = async (bookingDate, numberOfParticipants, userIp, userId, storeId) => {
+    try {
+        const newRecord = await db.Reserve_Ticket.create({
+            RT_DateTimeArrival: bookingDate,
+            RT_NumberOfParticipants: numberOfParticipants,
+            RT_Ip: userIp,
+            U_Id: userId,
+            CS_Id: storeId
+        });
+        return newRecord;
+    } catch (error) {
+        console.error('Error creating booking record:', error);
+        throw error;
+    }
+};
+
+const createStatusReserveTicket = async (Reserve_Ticket_ID, status) => {
+    try {
+        const newRecord = await db.Status_Reserve_Ticket.create({
+            RT_Id: Reserve_Ticket_ID,
+            SRT_Describe: status,
+        });
+        return newRecord.updatedAt;
+    } catch (error) {
+        console.error('Error creating booking record:', error);
+        return null
+    }
+};
+
+const createQrCode = (data) => {
+    return new Promise((resolve, reject) => {
+        let stringdata = JSON.stringify(data);
+        console.log('stringdata', stringdata);
+        const options = {
+            errorCorrectionLevel: 'H', // Mức độ sửa lỗi (L, M, Q, H)
+            type: 'image/png', // Định dạng hình ảnh của mã QR
+            quality: 1, // Chất lượng hình ảnh (0-1)
+            margin: 1, // Khoảng cách lề (đơn vị: module)
+            color: {
+                dark: '#000000', // Màu cho phần module
+                light: '#ffffff' // Màu cho phần nền
+            },
+            width: 350, // Kích thước của mã QR (đơn vị: pixel)
+            height: 350
+        };
+        QRCode.toDataURL(stringdata, options, function (err, code) {
+            if (err) {
+                console.log('Error:', err);
+                reject(err);
+            } else {
+                // console.log('QR Code:', code);
+                resolve(code);
+            }
+        });
+    });
+};
+
+
+
+//-----------------------------------------------status save Store--------------------------------------------------//
 const findStatusSaveStore = async (idUser, isStore) => {
     try {
         const listSave = await db.Favorites_List.findOne({
@@ -387,28 +437,30 @@ const deleteSaveStore = async (idUser, isStore) => {
 }
 
 
-
 module.exports = {
-    // Find
-    findBookingbyIp,
-    findLastBookingId,
-    findBookingbyId,
-    findLatestStatusByTicketId,                      // --> No account
-    findTimeCreateLatestStatusByTicketId,           // --> No account
-    findAllBookingbyIdUser,
-
+    // Account
     findUserById,
-    findStatusSaveStore,
-    findStatusSaveAllStore,
-    updateInfoUser,
+    updateInforUser,
     changePasswordUser,
 
-    checkBookingCondition,
-    checkTimeTicket,
+    // Store
+    findLatestStatusByReserveTicketId,              // --> No account
+    findTimeCreateLatestStatusByTicketId,           // --> No account
 
-    createStatusBooking,
+    findReserveTicketbyIp,
+    findLastReserveTicketId,
+    findReserveTicketbyId,
+    findAllReserveTicketbyIdUser,
+    findAllReserveTicketTodaybyIdUser,
+
+    findStatusSaveStore,
+    findStatusSaveAllStore,
+    checkBookingCondition,
+    checkTimeReserveTicket,
+
+    createStatusReserveTicket,
     createQrCode,
-    createBookingRecord,
+    createReserveTicket,
     createSaveStore,
     deleteSaveStore,
 

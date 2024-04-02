@@ -1,7 +1,15 @@
 import express from "express";
-const { loginUser, loginManager, registerUser, registerManager, logOut, forgotPasswordUser, changePasswordUser } = require('../controllers/authentication-controller');
+import {
+    loginUser,
+    loginManager,
+    registerUser,
+    registerManager,
+    logOut,
+    forgotPasswordUser,
+    changePasswordUser
+} from '../controllers/authentication-controller';
 
-// Tạo các hàm initWebRoutes riêng cho từng nhóm route
+
 function initAuthRoutes() {
     let router = express.Router();
     router.post('/change-password', changePasswordUser)

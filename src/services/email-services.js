@@ -36,4 +36,3 @@ export default async function sendEmail(email, name, url) {
     }
 }
 
-// Gọi hàm gửi email
