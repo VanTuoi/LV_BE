@@ -65,6 +65,34 @@ const changePasswordUser = async (id, newPassword) => {
     }
 };
 
+const findAvatarbyId = async (id) => {
+    try {
+        const user = await db.User.findByPk(id)
+        return user.U_Avatar ? user.U_Avatar : null;
+    } catch (error) {
+        console.error('Error finding avatar user :', error);
+        return null;
+    }
+}
+
+const changeAvatarbyId = async (id, newAvatar) => {
+    try {
+
+        const user = await db.User.findByPk(id);
+
+        if (!user) {
+            console.error('User not found');
+            return null;
+        }
+        user.U_Avatar = newAvatar;
+
+        await user.save(); // Save the changes to the database
+        return user;
+    } catch (error) {
+        console.error('Error finding change avatar', error);
+        return null;
+    }
+}
 
 // ----------------------------------------Booking ---------------------------------------------------------//
 const checkTimeReserveTicket = async (Reserve_Ticket_ID) => {
@@ -87,39 +115,28 @@ const checkTimeReserveTicket = async (Reserve_Ticket_ID) => {
     }
 }
 
-const checkBookingCondition = async (bookingTime, userId, ip, storeId) => {
+const checkBookingConditionHaveAccount = async (bookingTime, userId, storeId) => {
     try {
-        const startTime = new Date(bookingTime - (2 * 60 * 60 * 100 + 60 * 1000)); // Thời gian bắt đầu (bookingTime)
+        const startTime = new Date(bookingTime - ((2 * 60 * 60 * 1000 + 60 * 1000))); // Thời gian bắt đầu (bookingTime)
         const endTime = new Date(bookingTime + (2 * 60 * 60 * 1000 - 60 * 1000)); // Thời gian kết thúc (2 giờ sau bookingTime)
-
         // Tìm xem có bất kỳ đặt bàn nào trong khoảng thời gian từ startTime đến endTime không
         const bookingCount = await db.Reserve_Ticket.count({
             where: {
-                [Op.or]: [
-                    {
-                        U_Id: userId,
-                        CS_Id: storeId,
-                        RT_DateTimeArrival: {
-                            [Op.between]: [startTime, endTime]
-                        }
-                    },
-                    {
-                        RT_Ip: ip,
-                        CS_Id: storeId,
-                        RT_DateTimeArrival: {
-                            [Op.between]: [startTime, endTime]
-                        }
-                    }
-                ]
-            }
+                U_Id: userId,
+                CS_Id: storeId,
+                RT_DateTimeArrival: {
+                    [Op.between]: [startTime, endTime]
+                }
+            },
         });
         // Trả về true nếu không có đặt bàn nào trong khoảng thời gian đó, ngược lại trả về false
         return bookingCount === 0;
     } catch (error) {
-        console.error('Error checkIng booking condition:', error);
+        console.error('Error checkIng booking condition with have account', error);
         throw error;
     }
 };
+
 
 const findLatestStatusByReserveTicketId = async (Reserve_Ticket_ID) => {
     try {
@@ -333,7 +350,7 @@ const createStatusReserveTicket = async (Reserve_Ticket_ID, status) => {
 const createQrCode = (data) => {
     return new Promise((resolve, reject) => {
         let stringdata = JSON.stringify(data);
-        console.log('stringdata', stringdata);
+        // console.log('stringdata', stringdata);
         const options = {
             errorCorrectionLevel: 'H', // Mức độ sửa lỗi (L, M, Q, H)
             type: 'image/png', // Định dạng hình ảnh của mã QR
@@ -357,7 +374,6 @@ const createQrCode = (data) => {
         });
     });
 };
-
 
 
 //-----------------------------------------------status save Store--------------------------------------------------//
@@ -442,6 +458,8 @@ module.exports = {
     findUserById,
     updateInforUser,
     changePasswordUser,
+    findAvatarbyId,
+    changeAvatarbyId,
 
     // Store
     findLatestStatusByReserveTicketId,              // --> No account
@@ -455,7 +473,7 @@ module.exports = {
 
     findStatusSaveStore,
     findStatusSaveAllStore,
-    checkBookingCondition,
+    checkBookingConditionHaveAccount,
     checkTimeReserveTicket,
 
     createStatusReserveTicket,

@@ -5,7 +5,12 @@ import {
     getMenusCoffeeStorebyId,
     getServicesCoffeeStorebyId,
     getTagsCoffeeStorebyId,
-    getStoresByName
+    getHolidaysStore,
+    getCommentStore,
+    getRatingStore,
+    getStoresByName,
+    checkTimeBooking,
+    createReserveTicketNoAccount,
 } from '../controllers/store-controller';
 
 function initStoreRouters() {
@@ -13,8 +18,13 @@ function initStoreRouters() {
 
     router.get('/search', getStoresByName);
     router.get('/detail', getDetailCoffeeStorebyId);
+    router.get('/holidays', getHolidaysStore);
     router.get('/menus', getMenusCoffeeStorebyId);
     router.get('/services', getServicesCoffeeStorebyId);
+    router.get('/comments', getCommentStore);
+    router.post('/check-time-booking', checkTimeBooking)        // Có ip
+    router.post('/create-reserver', createReserveTicketNoAccount)        // Có ip
+    router.get('/rating', getRatingStore);
     router.get('/tags', getTagsCoffeeStorebyId);
     router.get('/:id', getCoffeeStorebyId);
 

@@ -30,11 +30,10 @@ module.exports = (sequelize, DataTypes) => {
         len: [0, 200]
       }
     },
-    C_StartNumber: {
+    C_StarsNumber: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    C_DateTimeComments: DataTypes.DATE,
     U_Id: DataTypes.INTEGER,
     CS_Id: DataTypes.INTEGER,
   }, {

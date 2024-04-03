@@ -1,6 +1,29 @@
 import db from "../models/index";
 const { Op, literal } = require('sequelize');
 
+//-----------------------------------------------Booking----------------------------------//
+const checkBookingConditionNoAccount = async (bookingTime, ip, storeId) => {
+    try {
+        const startTime = new Date(bookingTime - (2 * 60 * 60 * 1000 + 60 * 1000)); // Thời gian bắt đầu (bookingTime)
+        const endTime = new Date(bookingTime + (2 * 60 * 60 * 1000 - 60 * 1000)); // Thời gian kết thúc (2 giờ sau bookingTime)
+        // Tìm xem có bất kỳ đặt bàn nào trong khoảng thời gian từ startTime đến endTime không
+        const bookingCount = await db.Reserve_Ticket.count({
+            where: {
+                RT_Ip: ip,
+                CS_Id: storeId,
+                RT_DateTimeArrival: {
+                    [Op.between]: [startTime, endTime]
+                }
+            }
+        });
+        // Trả về true nếu không có đặt bàn nào trong khoảng thời gian đó, ngược lại trả về false
+        return bookingCount === 0;
+    } catch (error) {
+        console.error('Error checkIng booking condition with no account', error);
+        throw error;
+    }
+};
+
 //-------------------------------------------- Tìm kiếm --------------------------------//
 const findCoffeeStoreById = async (id) => {
     try {
@@ -226,6 +249,92 @@ let createHoLiday = async (AS_Holiday, CS_Id) => {
     }
 }
 
+let findComment = async (U_Id, CS_Id) => {
+    try {
+        const newRecord = await db.Comments.findOne({
+            where: {
+                U_Id: U_Id,
+                CS_Id: CS_Id
+            }
+        })
+        return newRecord ? newRecord : null
+    } catch (error) {
+        console.error('Error find comment record:', error);
+    }
+}
+
+let findAllCommentsOfStore = async (CS_Id) => {
+    try {
+        const newRecord = await db.Comments.findAll(
+            {
+                where: {
+                    CS_Id: CS_Id,
+                },
+                include: [{
+                    model: db.User,
+                    attributes: ['U_Avatar', 'U_Name']
+                }],
+            }
+        )
+        return newRecord ? newRecord : null
+    } catch (error) {
+        console.error('Error find comment record:', error);
+    }
+}
+
+let createComment = async (U_Id, CS_Id, detail, starsNumber) => {
+    try {
+        const newRecord = await db.Comments.create({
+            C_Details: detail,
+            C_StarsNumber: starsNumber,
+            U_Id: U_Id,
+            CS_Id: CS_Id
+        })
+        return newRecord ? true : null
+    } catch (error) {
+        console.error('Error creating comment record:', error);
+    }
+}
+
+let updateComment = async (U_Id, CS_Id, detail, starsNumber) => {
+    try {
+        const comment = await db.Comments.findOne({
+            where: {
+                CS_Id: CS_Id,
+                U_Id: U_Id
+            }
+        });
+        if (comment) {
+            comment.C_Details = detail;
+            comment.C_StarsNumber = starsNumber;
+            await comment.save();
+
+            return true;
+        } else {
+            console.log('Không tìm thấy bình luận để cập nhật');
+            return null;
+        }
+    } catch (error) {
+        console.error('Error updating comment record:', error);
+        return null;
+    }
+};
+
+let deleteComment = async (U_Id, CS_Id,) => {
+    try {
+        const deletedRecordCount = await db.Comments.destroy({
+            where: {
+                U_Id: U_Id,
+                CS_Id: CS_Id
+            }
+        });
+        return deletedRecordCount > 0 ? true : false;
+    } catch (error) {
+        console.error('Error deleting comment record:', error);
+        return false;
+    }
+};
+
 
 //--------------------------------------Cập nhật----------------------------------------------//
 const updateCoffeeStoreRecord = async (id, name, location, maxPeople, timeOpen, timeClose, detail) => {
@@ -316,6 +425,9 @@ const updateServicesCoffeeStore = async (id, updatedServicesList) => {
 
 
 module.exports = {
+    // Booking
+    checkBookingConditionNoAccount,
+
     // Find
     findCoffeeStoreById,
     findAllCoffeeStoreByName,
@@ -338,4 +450,10 @@ module.exports = {
     updateCoffeeStoreRecord,
     updateMenusCoffeeStore,
     updateServicesCoffeeStore,
+
+    findComment,
+    findAllCommentsOfStore,
+    createComment,
+    updateComment,
+    deleteComment
 }

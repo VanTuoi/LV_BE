@@ -40,6 +40,13 @@ module.exports = (sequelize, DataTypes) => {
         len: [10, 10]
       }
     },
+    M_Email: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      validate: {
+        len: [0, 100]
+      }
+    },
     M_Gender: {
       type: DataTypes.ENUM('M', 'F', 'O'),
       allowNull: false

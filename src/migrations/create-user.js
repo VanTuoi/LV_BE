@@ -10,6 +10,10 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
+      U_Avatar: {
+        allowNull: false,
+        type: Sequelize.STRING
+      },
       U_Name: {
         allowNull: false,
         type: Sequelize.STRING(50)

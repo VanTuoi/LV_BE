@@ -34,11 +34,11 @@ function initManagerRoutes() {
     // Store
     router.post('/is-manager-store', isManagerAssignedToStore);
     router.post('/get-full-store', getCoffeeStoreByIdManager);
+    router.post('/create-holiday', createHoliday);
     router.get('/get-holiday', getHolidays);
     router.post('/get-reserve-tickets', getReserveTicketsToMonth);
     router.post('/create-store', createCoffeeStore);
     router.patch('/update-store', updateCoffeeStore);
-    router.post('/create-holiday', createHoliday);
     router.post('/check-in', checkIn);
     router.post('/upload-image-page-detail', uploadImgaePageDetail);
     router.post('/upload-image-banner', uploadImgaePageDetail);

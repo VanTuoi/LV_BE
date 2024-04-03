@@ -17,9 +17,6 @@ module.exports = {
         allowNull: false,
         type: Sequelize.INTEGER
       },
-      C_DateTimeComments: {
-        type: Sequelize.DATE
-      },
       U_Id: {
         type: Sequelize.INTEGER
       },

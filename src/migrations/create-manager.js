@@ -19,6 +19,10 @@ module.exports = {
       M_PhoneNumber: {
         type: Sequelize.STRING(10)
       },
+      M_Email: {
+        allowNull: true,
+        type: Sequelize.STRING(100)
+      },
       M_Gender: {
         type: Sequelize.ENUM('M', 'F', 'O'),
         allowNull: false

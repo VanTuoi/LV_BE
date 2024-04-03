@@ -219,7 +219,6 @@ const loginManager = async (req, res) => {
     }
 };
 
-
 const forgotPasswordManager = async (req, res) => {
 
 }
@@ -227,6 +226,7 @@ const forgotPasswordManager = async (req, res) => {
 const changePasswordManager = async (req, res) => {
 
 }
+
 
 const logOut = async (req, res) => {
     res.clearCookie('Jwt');

@@ -28,6 +28,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       primaryKey: true
     },
+    U_Avatar: {
+      type: DataTypes.BLOB('long'),
+      allowNull: true
+    },
     U_Name: {
       type: DataTypes.STRING,
       allowNull: false,
