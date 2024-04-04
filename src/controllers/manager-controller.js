@@ -244,7 +244,7 @@ const uploadImgaePageDetail = async (req, res) => {
 
         if (!coffeeStoreId) { return res.status(200).json(createResponse(-1, 'Không tìm thấy id',)) }
 
-        let urlImage = await imageServices.uploadImage(image, coffeeStoreId)
+        let urlImage = await imageServices.uploadImage(image, `CS_${coffeeStoreId}_`)
 
         if (urlImage) {
             return res.status(200).json(createResponse(0, 'Tải ảnh thành công', urlImage))
@@ -272,7 +272,7 @@ const getImageBanner = async (req, res) => {
 
         if (!coffeeStoreId) { return res.status(200).json(createResponse(-1, 'Không tìm thấy id',)) }
 
-        let urlImage = await imageServices.getImageUrls(coffeeStoreId)
+        let urlImage = await imageServices.getImageUrls(`CS_${coffeeStoreId}_`)
 
         if (urlImage) {
             return res.status(200).json(createResponse(0, 'Lấy danh sách ảnh thành công', urlImage))

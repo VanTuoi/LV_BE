@@ -1,6 +1,7 @@
 import storeServices from '../services/store-services'
 import createResponse from '../helpers/responseHelper';
 import userServices from '../services/user-services'
+import imageServices from '../services/image-services'
 
 //--------------------------------------------- Tìm kiếm----------------------------------------------//
 const getCoffeeStorebyId = async (req, res) => {
@@ -140,8 +141,6 @@ const createReserveTicketNoAccount = async (req, res) => {
     }
 };
 
-
-
 const getHolidaysStore = async (req, res) => {
     try {
         const month = req.query.AS_Holiday;
@@ -222,6 +221,26 @@ const getRatingStore = async (req, res) => {
     }
 }
 
+const getBannerStore = async (req, res) => {
+    const { CS_Id: coffeeStoreId } = req.query;
+    try {
+        if (!coffeeStoreId) {
+            return res.status(200).json(createResponse(-1, 'Vui lòng nhập ID cửa hàng'));
+        }
+        let newRecord = await imageServices.getImageUrls(`CS_${coffeeStoreId}_`);
+
+        if (newRecord) {
+
+            return res.status(200).json(createResponse(0, 'Tìm thấy danh sách ảnh của cửa hàng', newRecord));
+
+        } else {
+            return res.status(200).json(createResponse(1, 'Không tìm danh sách ảnh của cửa hàng'));
+        }
+    } catch (error) {
+        console.log('Lỗi tìm ảnh của cửa hàng', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi tìm ảnh của cửa hàng'));
+    }
+}
 module.exports = {
     getCoffeeStorebyId,
     getDetailCoffeeStorebyId,
@@ -232,6 +251,7 @@ module.exports = {
     getStoresByName,
     getCommentStore,
     getRatingStore,
+    getBannerStore,
     checkTimeBooking,
     createReserveTicketNoAccount,
 }

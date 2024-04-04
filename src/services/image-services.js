@@ -7,8 +7,8 @@ const imageKit = new ImageKit({
     urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT
 });
 
-const uploadImage = async (base64Image, CS_Id) => {
-    const fileName = `${CS_Id}_${Date.now()}`; // Tạo tên file dựa trên M_Id và CS_Id
+const uploadImage = async (base64Image, content) => {
+    const fileName = `${content}${Date.now()}`; // Tạo tên file dựa trên M_Id và CS_Id
 
     try {
         const result = await imageKit.upload({
@@ -22,10 +22,10 @@ const uploadImage = async (base64Image, CS_Id) => {
     }
 };
 
-const getImageUrls = async (CS_Id) => {
+const getImageUrls = async (content) => {
     try {
         const result = await imageKit.listFiles({
-            searchQuery: `name:"${CS_Id}_"`
+            searchQuery: `name:"${content}"`
         });
         return result.map(file => file.url); // Trả về mảng các URL
     } catch (error) {

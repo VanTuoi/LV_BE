@@ -203,7 +203,6 @@ const createReserveTicketHaveAccount = async (req, res) => {
     }
 };
 
-
 //------------------------------------------ Store-------------------------------------------------------//
 const statusFavouriteStore = async (req, res) => {
     try {
