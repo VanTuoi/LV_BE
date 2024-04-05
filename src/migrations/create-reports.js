@@ -13,8 +13,13 @@ module.exports = {
         allowNull: false,
         type: Sequelize.STRING(200)
       },
-      R_DateTimeReports: {
-        type: Sequelize.DATE
+      R_Feedback: {
+        allowNull: true,
+        type: Sequelize.STRING(200)
+      },
+      R_Status: {
+        allowNull: false,
+        type: Sequelize.ENUM('Pending', 'Processed'),
       },
       U_Id: {
         type: Sequelize.INTEGER

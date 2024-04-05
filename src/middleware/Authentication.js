@@ -60,6 +60,15 @@ const verifyTokenUser = async (req, res, next) => {
 
         const user = await db.User.findOne({ where: { U_Id: decodedToken.data.Id } });
 
+        const status = await db.Status_User.findOne({
+            where: { U_Id: decodedToken.data.Id },
+            order: [['createdAt', 'DESC']],
+        });
+        if (status.SU_Describe === 'Lock') {
+            res.cookie("Jwt", '', { maxAge: 2 })        // Xóa token
+            return res.status(200).json(createResponse(-6, 'Tài khoản của bạn đã bị khóa', null));
+        }
+
         if (!user) {
             return res.status(200).json(createResponse(-4, 'Bạn không có quyền truy cập chức năng này', null));
         }
@@ -95,6 +104,15 @@ const verifyTokenManager = async (req, res, next) => {
         }
 
         const manager = await db.Manager.findOne({ where: { M_Id: decodedToken.data.Id } });
+
+        const status = await db.Status_Manager.findOne({
+            where: { M_Id: decodedToken.data.Id },
+            order: [['createdAt', 'DESC']],
+        });
+        if (status.SM_Describe === 'Lock') {
+            res.cookie("Jwt", '', { maxAge: 2 })        // Xóa token
+            return res.status(200).json(createResponse(-6, 'Tài khoản của bạn đã bị khóa', null));
+        }
 
         if (!manager) {
             return res.status(200).json(createResponse(-4, 'Bạn không có quyền truy cập chức năng này', null));

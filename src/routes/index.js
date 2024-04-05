@@ -11,11 +11,11 @@ import initStoreRouters from './store-route';
 
 let initWebRoutes = (app) => {
     // Sử dụng các hàm initWebRoutes đã tạo
+    app.use('/api/v1/store', initStoreRouters());
     app.use('/api/v1/auth', initAuthRoutes());
     app.use('/api/v1/user', initUserRoutes());
     app.use('/api/v1/manager', initManagerRoutes());
     app.use('/api/v1/admin', initAdminRoutes());
-    app.use('/api/v1/store', initStoreRouters());
 
     // Route chung
     app.all('/*', (req, res) => {

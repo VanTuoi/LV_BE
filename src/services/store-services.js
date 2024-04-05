@@ -1,6 +1,6 @@
 import db from "../models/index";
 const { Op, literal } = require('sequelize');
-
+const Sequelize = require('sequelize');
 //-----------------------------------------------Booking----------------------------------//
 const checkBookingConditionNoAccount = async (bookingTime, ip, storeId) => {
     try {
@@ -27,9 +27,27 @@ const checkBookingConditionNoAccount = async (bookingTime, ip, storeId) => {
 //-------------------------------------------- Tìm kiếm --------------------------------//
 const findCoffeeStoreById = async (id) => {
     try {
-        const coffeeStore = await db.Coffee_Store.findOne({
-            where: { CS_Id: id },
-            attributes: ['CS_Id', 'CS_Name', 'CS_Location', 'CS_MaxPeople', 'CS_TimeOpen', 'CS_TimeClose'],
+        const coffeeStore = await db.Coffee_Store.findByPk(id, {
+            attributes: [
+                'CS_Id',
+                'CS_Name',
+                'CS_Location',
+                'CS_MaxPeople',
+                'CS_TimeOpen',
+                'CS_TimeClose',
+                [
+                    Sequelize.literal(`(
+                        SELECT SCS_Describe
+                        FROM Status_Coffee_Store
+                        WHERE 
+                        Status_Coffee_Store.CS_Id = Coffee_Store.CS_Id
+                        ORDER BY createdAt DESC
+                        LIMIT 1
+                    )`),
+                    'CS_Status'
+                ]
+            ],
+            raw: true // Sử dụng raw: true để Sequelize không phân tích cú pháp câu lệnh SQL
         });
         return coffeeStore;
     } catch (error) {
@@ -204,6 +222,20 @@ const createCoffeeStore = async (id, name, location, detail, maxPeople, timeOpen
     }
 };
 
+const createStatusCoffeeStore = async (id) => {
+    try {
+
+        const newRecord = await db.Status_Coffee_Store.create({
+            SCS_Describe: 'Normal',
+            CS_Id: id
+        });
+        return newRecord;
+    } catch (error) {
+        console.error('Error creating  status store coffee record:', error);
+        throw error;
+    }
+};
+
 const createMenusFromList = async (store_Id, listMenus) => {
     try {
         for (const menu of listMenus) {
@@ -335,7 +367,6 @@ let deleteComment = async (U_Id, CS_Id,) => {
     }
 };
 
-
 //--------------------------------------Cập nhật----------------------------------------------//
 const updateCoffeeStoreRecord = async (id, name, location, maxPeople, timeOpen, timeClose, detail) => {
     try {
@@ -443,6 +474,7 @@ module.exports = {
 
     // Create
     createCoffeeStore,
+    createStatusCoffeeStore,
     createMenusFromList,
     createServicesFromList,
 

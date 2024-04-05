@@ -4,6 +4,30 @@ import userServices from '../services/user-services'
 import imageServices from '../services/image-services'
 
 //--------------------------------------------- Tìm kiếm----------------------------------------------//
+const getStatusStore = async (req, res) => {
+
+    const id = req.params.id;
+
+    try {
+        if (!id) {
+            return res.status(200).json(createResponse(-1, 'Vui lòng nhập ID cửa hàng'));
+        }
+        let newRecord = await storeServices.findCoffeeStoreById(id)
+        if (newRecord) {
+            if (newRecord.CS_Status === 'Normal') {
+                return res.status(200).json(createResponse(0, 'Cửa hàng hoạt động bình thường',));
+            } else {
+                return res.status(200).json(createResponse(1, 'Cửa hàng bị khóa',));
+            }
+        } else {
+            return res.status(200).json(createResponse(2, 'Không tìm thấy cửa hàng'));
+        }
+    } catch (error) {
+        console.log('Lỗi tìm cửa hàng theo id', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi tìm cửa hàng theo id'));
+    }
+}
+
 const getCoffeeStorebyId = async (req, res) => {
 
     const id = req.params.id;
@@ -45,7 +69,6 @@ const getDetailCoffeeStorebyId = async (req, res) => {
 
 const getMenusCoffeeStorebyId = async (req, res) => {
     const { CS_Id: id } = req.query;
-
     try {
         if (!id) {
             return res.status(200).json(createResponse(-1, 'Vui lòng nhập ID cửa hàng'));
@@ -223,6 +246,7 @@ const getRatingStore = async (req, res) => {
 
 const getBannerStore = async (req, res) => {
     const { CS_Id: coffeeStoreId } = req.query;
+
     try {
         if (!coffeeStoreId) {
             return res.status(200).json(createResponse(-1, 'Vui lòng nhập ID cửa hàng'));
@@ -241,7 +265,9 @@ const getBannerStore = async (req, res) => {
         return res.status(500).json(createResponse(-5, 'Lỗi tìm ảnh của cửa hàng'));
     }
 }
+
 module.exports = {
+    getStatusStore,
     getCoffeeStorebyId,
     getDetailCoffeeStorebyId,
     getMenusCoffeeStorebyId,

@@ -21,6 +21,12 @@ import {
     changeComment,
     deleteComment,
 
+    createReport,
+    getReport,
+    getAllReports,
+    changeReport,
+    deleteReport,
+
 } from '../controllers/user-controller';
 
 function initUserRoutes() {
@@ -49,6 +55,12 @@ function initUserRoutes() {
     router.post('/get-comment', getComment);
     router.post('/change-comment', changeComment);
     router.post('/delete-comment', deleteComment);
+
+    router.post('/create-report', createReport);
+    router.post('/get-report', getReport);
+    router.post('/get-all-reports', getAllReports);
+    router.post('/change-report', changeReport);
+    router.post('/delete-report', deleteReport);
 
     return router;
 }

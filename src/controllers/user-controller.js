@@ -373,7 +373,109 @@ const deleteComment = async (req, res) => {
 
     } catch (error) {
         console.error('Lỗi xóa bình luận', error);
-        return res.status(500).json(createResponse(-5, 'Lỗi xóa bình luận', null));
+        return res.status(500).json(createResponse(-5, 'Lỗi xóa bình luận', null))
+    }
+}
+
+
+const createReport = async (req, res) => {
+    try {
+        const { U_Id: id, CS_Id: CS_Id, R_Details: R_Details } = req.body;
+        if (!id || !CS_Id || !R_Details) {
+            return res.status(201).json(createResponse(-1, 'Dữ liệu báo cáo không đủ', null));
+        }
+
+        let status = await userServices.createReport(id, CS_Id, R_Details)
+
+        if (status) {
+            return res.status(200).json(createResponse(0, 'Tạo báo cáo thành công'));
+        }
+        return res.status(200).json(createResponse(1, 'Tạo báo cáo thất bại', null));
+
+    } catch (error) {
+        console.error('Lỗi tạo báo cáo', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi tạo báo cáo', null));
+    }
+}
+
+const getReport = async (req, res) => {
+    try {
+        const { U_Id: id, CS_Id: CS_Id, } = req.body;
+        if (!id || !CS_Id) {
+            return res.status(201).json(createResponse(-1, 'Dữ liệu tìm báo cáo không đủ', null));
+        }
+
+        let isHave = await userServices.findReport(id, CS_Id)
+
+        if (isHave) {
+            return res.status(200).json(createResponse(0, 'Tìm thấy báo cáo của người dùng', true));
+        }
+        return res.status(200).json(createResponse(1, 'Không tìm thấy báo cáo của người dùng', null));
+
+    } catch (error) {
+        console.error('Lỗi tìm báo cáo của người dùng', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi tìm báo cáo của người dùng', null));
+    }
+}
+
+const getAllReports = async (req, res) => {
+    try {
+        const { U_Id: id, } = req.body;
+        if (!id) {
+            return res.status(201).json(createResponse(-1, 'Dữ liệu tìm danh sách báo cáo không đủ', null));
+        }
+
+        let isHave = await userServices.findAllReportOfUser(id)
+
+        if (isHave) {
+            return res.status(200).json(createResponse(0, 'Tìm thấy danh sách báo cáo của người dùng', isHave));
+        }
+        return res.status(200).json(createResponse(1, 'Không tìm thấy danh sách báo cáo của người dùng', null));
+
+    } catch (error) {
+        console.error('Lỗi tìm danh sách báo cáo của người dùng', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi tìm danh sách báo cáo của người dùng', null));
+    }
+}
+
+const changeReport = async (req, res) => {
+    try {
+        const { R_Id: R_Id, R_Details: R_Detail } = req.body;
+
+        if (!R_Id || !R_Detail) {
+            return res.status(201).json(createResponse(-1, 'Dữ liệu thay đổi báo cáo không đủ', null));
+        }
+
+        let status = await userServices.updateReport(R_Id, R_Detail)
+
+        if (status) {
+            return res.status(200).json(createResponse(0, 'Thay đổi báo cáo thành công'));
+        }
+        return res.status(200).json(createResponse(1, 'Thay đổi báo cáo thất bại', null));
+
+    } catch (error) {
+        console.error('Lỗi thay đổi báo cáo', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi thay đổi báo cáo', null));
+    }
+}
+
+const deleteReport = async (req, res) => {
+    try {
+        const { R_Id: id } = req.body;
+        if (!id) {
+            return res.status(201).json(createResponse(-1, 'Dữ liệu xóa báo cáo không đủ', null));
+        }
+
+        let status = await userServices.deleteReport(id)
+
+        if (status) {
+            return res.status(200).json(createResponse(0, 'Xóa báo cáo thành công'));
+        }
+        return res.status(200).json(createResponse(1, 'Xóa báo cáo thất bại', null));
+
+    } catch (error) {
+        console.error('Lỗi xóa báo cáo', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi xóa báo cáo', null));
     }
 }
 
@@ -397,4 +499,10 @@ module.exports = {
     getComment,
     changeComment,
     deleteComment,
+
+    createReport,
+    getReport,
+    getAllReports,
+    changeReport,
+    deleteReport,
 }

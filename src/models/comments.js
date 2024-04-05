@@ -25,14 +25,14 @@ module.exports = (sequelize, DataTypes) => {
     },
     C_Details: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
       validate: {
         len: [0, 200]
       }
     },
     C_StarsNumber: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: true
     },
     U_Id: DataTypes.INTEGER,
     CS_Id: DataTypes.INTEGER,

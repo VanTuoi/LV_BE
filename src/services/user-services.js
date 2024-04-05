@@ -452,6 +452,98 @@ const deleteSaveStore = async (idUser, isStore) => {
     }
 }
 
+// -------------------------------------------------- report------------------------------------------------------//
+let findReport = async (U_Id, CS_Id) => {
+    try {
+        const newRecord = await db.Reports.findOne({
+            where: {
+                U_Id: U_Id,
+                CS_Id: CS_Id
+            }
+        })
+        return newRecord ? newRecord : null
+    } catch (error) {
+        console.error('Error find report record:', error);
+    }
+}
+
+let findAllReportOfUser = async (U_Id) => {
+    try {
+        const reports = await db.Reports.findAll({
+            where: {
+                U_Id: U_Id,
+            },
+            include: [{
+                model: db.Coffee_Store,
+                attributes: ['CS_Name']
+            }],
+        });
+
+        if (!reports) return null;
+
+        const flattenedReports = reports.map((report) => {
+            const reportJson = report.toJSON();
+
+            return {
+                ...reportJson,
+                CS_Name: reportJson.Coffee_Store.CS_Name,
+            };
+        });
+
+        return flattenedReports;
+    } catch (error) {
+        console.error('Error find report record:', error);
+        return null;
+    }
+};
+
+let createReport = async (U_Id, CS_Id, detail) => {
+    try {
+        const newRecord = await db.Reports.create({
+            R_Details: detail,
+            R_Status: 'Pending',
+            U_Id: U_Id,
+            CS_Id: CS_Id
+        })
+        return newRecord ? true : null
+    } catch (error) {
+        console.error('Error creating report record:', error);
+    }
+}
+
+const updateReport = async (id, detail) => {
+    try {
+        const report = await db.Reports.findByPk(id);
+
+        if (!report) {
+            return null
+        }
+
+        report.R_Details = detail;
+
+        await report.save();
+
+        return true
+    } catch (error) {
+        console.error('Error change report', error);
+        return null;
+    }
+}
+
+const deleteReport = async (id) => {
+    try {
+
+        const deletedReport = await db.Reports.destroy({
+            where: {
+                R_Id: id
+            }
+        });
+        return deletedReport ? true : false;
+    } catch (error) {
+        console.error('Error deleting report', error);
+        return null;
+    }
+}
 
 module.exports = {
     // Account
@@ -482,4 +574,9 @@ module.exports = {
     createSaveStore,
     deleteSaveStore,
 
+    findReport,
+    findAllReportOfUser,
+    createReport,
+    updateReport,
+    deleteReport
 }

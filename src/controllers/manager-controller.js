@@ -69,6 +69,7 @@ const createCoffeeStore = async (req, res) => {
             await storeServices.createCoffeeStore(managerId, name, location, detail, maxPeople, timeOpen, timeClose, t);
             coffeeStoreId = await storeServices.findCoffeeStoreIdByManagerId(managerId, t);
 
+            await storeServices.createStatusCoffeeStore(coffeeStoreId);
             await storeServices.createMenusFromList(coffeeStoreId, listMenu, t);
             await storeServices.createServicesFromList(coffeeStoreId, listServices, t);
 

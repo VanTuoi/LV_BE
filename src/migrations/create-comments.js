@@ -10,11 +10,11 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       C_Details: {
-        allowNull: false,
+        allowNull: true,
         type: Sequelize.STRING(200)
       },
       C_StarsNumber: {
-        allowNull: false,
+        allowNull: true,
         type: Sequelize.INTEGER
       },
       U_Id: {
