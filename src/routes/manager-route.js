@@ -18,6 +18,7 @@ import {
     uploadImgaePageDetail,
     getImageBanner,
     deleteImageBanner,
+    checkStatusAllReserveTicketOfStore,
 } from '../controllers/manager-controller';
 
 
@@ -37,6 +38,7 @@ function initManagerRoutes() {
     router.post('/create-holiday', createHoliday);
     router.get('/get-holiday', getHolidays);
     router.post('/get-reserve-tickets', getReserveTicketsToMonth);
+    router.post('/check-status-all-reserve-of-store', checkStatusAllReserveTicketOfStore)
     router.post('/create-store', createCoffeeStore);
     router.patch('/update-store', updateCoffeeStore);
     router.post('/check-in', checkIn);

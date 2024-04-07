@@ -344,7 +344,6 @@ const deleteReport = async (id) => {
 }
 
 
-
 module.exports = {
     findAllUsers,
     lockUser,

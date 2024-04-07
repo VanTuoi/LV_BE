@@ -24,6 +24,84 @@ const checkBookingConditionNoAccount = async (bookingTime, ip, storeId) => {
     }
 };
 
+let findReserveTicketToMonth = async (month, id) => {
+    try {
+        const startDate = new Date(+month);
+        startDate.setDate(1);
+        const endDate = new Date(+month);
+        endDate.setMonth(endDate.getMonth() + 1);
+
+        const newRecord = await db.Reserve_Ticket.findAll({
+            where: {
+                CS_Id: id,
+                RT_DateTimeArrival: {
+                    [Op.between]: [startDate, endDate]
+                }
+            },
+            // include: 'User',
+            include: [{
+                model: db.Coffee_Store,
+                attributes: ['CS_Name']
+            }],
+        });
+        return newRecord;
+
+    } catch (error) {
+        console.error(`Error finding reserve ticke at store id: ${id} to month records:`, error);
+        return null
+    }
+}
+
+const findAllReserveTicketOfCoffeeStoreById = async (id) => {
+    try {
+        const bookingField = await db.Reserve_Ticket.findAll({
+            where: {
+                CS_Id: id,
+            },
+            order: [['createdAt', 'DESC']],
+            attributes: ['RT_DateTimeArrival', 'RT_Id', 'RT_NumberOfParticipants',],
+            include: [
+                {
+                    model: db.Status_Reserve_Ticket,
+                    attributes: ['SRT_Describe', 'createdAt'],
+                    order: [['createdAt', 'DESC']],
+                    limit: 1
+                },
+                {
+                    model: db.Coffee_Store,
+                    attributes: ['CS_Id', 'CS_Name', 'CS_Location', 'CS_Avatar'],
+                }
+            ]
+        });
+        let list = []
+        if (bookingField) {
+            for (const item of bookingField) {
+                try {
+                    const Info = {
+                        CS_Id: item.Coffee_Store.CS_Id,
+                        RT_Id: item.RT_Id,
+                        CS_Name: item.Coffee_Store.CS_Name,
+                        CS_Avatar: item.Coffee_Store.CS_Avatar,
+                        CS_Location: item.Coffee_Store.CS_Location,
+                        RT_DateTimeArrival: item.RT_DateTimeArrival,
+                        RT_NumberOfParticipants: item.RT_NumberOfParticipants,
+                        SRT_Describe: item.Status_Reserve_Tickets[0].SRT_Describe,
+                        RT_TimeCheckIn: item.Status_Reserve_Tickets[0].createdAt
+                    };
+                    list.push(Info);
+                } catch (error) {
+                    console.error('Error processing item:', error);
+                }
+            }
+        }
+        return list;
+    } catch (error) {
+        console.error('Error finding all booking field by Id store', error);
+        throw error;
+    }
+}
+
+
 //-------------------------------------------- Tìm kiếm --------------------------------//
 const findCoffeeStoreById = async (id) => {
     try {
@@ -31,6 +109,7 @@ const findCoffeeStoreById = async (id) => {
             attributes: [
                 'CS_Id',
                 'CS_Name',
+                'CS_Avatar',
                 'CS_Location',
                 'CS_MaxPeople',
                 'CS_TimeOpen',
@@ -60,7 +139,7 @@ const findAllCoffeeStoreByName = async (name) => {
     try {
         const coffeeStores = await db.Coffee_Store.findAll({
             where: literal(`LOWER(CS_Name) LIKE LOWER('%${name}%')`),           // Tìm kiếm hoa và thường
-            attributes: ['CS_Id', 'CS_Name', 'CS_Location', 'CS_MaxPeople', 'CS_TimeOpen', 'CS_TimeClose'],
+            attributes: ['CS_Id', 'CS_Name', 'CS_Avatar', 'CS_Location', 'CS_MaxPeople', 'CS_TimeOpen', 'CS_TimeClose'],
         });
         return coffeeStores;
     } catch (error) {
@@ -144,34 +223,6 @@ const findCoffeeStoreIdByManagerId = async (managerId) => {
     }
 };
 
-let findReserveTicketToMonth = async (month, id) => {
-    try {
-        const startDate = new Date(+month);
-        startDate.setDate(1);
-        const endDate = new Date(+month);
-        endDate.setMonth(endDate.getMonth() + 1);
-
-        const newRecord = await db.Reserve_Ticket.findAll({
-            where: {
-                CS_Id: id,
-                RT_DateTimeArrival: {
-                    [Op.between]: [startDate, endDate]
-                }
-            },
-            // include: 'User',
-            include: [{
-                model: db.Coffee_Store,
-                attributes: ['CS_Name']
-            }],
-        });
-        return newRecord;
-
-    } catch (error) {
-        console.error(`Error finding reserve ticke at store id: ${id} to month records:`, error);
-        return null
-    }
-}
-
 let findAllHolidayToMonth = async (month) => {
     try {
 
@@ -198,9 +249,42 @@ let findAllHolidayToMonth = async (month) => {
     }
 }
 
+let findComment = async (U_Id, CS_Id) => {
+    try {
+        const newRecord = await db.Comments.findOne({
+            where: {
+                U_Id: U_Id,
+                CS_Id: CS_Id
+            }
+        })
+        return newRecord ? newRecord : null
+    } catch (error) {
+        console.error('Error find comment record:', error);
+    }
+}
+
+let findAllCommentsOfStore = async (CS_Id) => {
+    try {
+        const newRecord = await db.Comments.findAll(
+            {
+                where: {
+                    CS_Id: CS_Id,
+                },
+                include: [{
+                    model: db.User,
+                    attributes: ['U_Avatar', 'U_Name']
+                }],
+            }
+        )
+        return newRecord ? newRecord : null
+    } catch (error) {
+        console.error('Error find comment record:', error);
+    }
+}
+
 //------------------------------------- Tạo mới-----------------------------------------//
 
-const createCoffeeStore = async (id, name, location, detail, maxPeople, timeOpen, timeClose) => {
+const createCoffeeStore = async (id, name, location, detail, maxPeople, timeOpen, timeClose, avatar) => {
     try {
 
         let coverTimeOpen = new Date(timeOpen)
@@ -208,6 +292,7 @@ const createCoffeeStore = async (id, name, location, detail, maxPeople, timeOpen
 
         const newRecord = await db.Coffee_Store.create({
             CS_Name: name,
+            CS_Avatar: avatar,
             CS_Location: location,
             CS_Detail: detail,
             CS_MaxPeople: +maxPeople,
@@ -281,39 +366,6 @@ let createHoLiday = async (AS_Holiday, CS_Id) => {
     }
 }
 
-let findComment = async (U_Id, CS_Id) => {
-    try {
-        const newRecord = await db.Comments.findOne({
-            where: {
-                U_Id: U_Id,
-                CS_Id: CS_Id
-            }
-        })
-        return newRecord ? newRecord : null
-    } catch (error) {
-        console.error('Error find comment record:', error);
-    }
-}
-
-let findAllCommentsOfStore = async (CS_Id) => {
-    try {
-        const newRecord = await db.Comments.findAll(
-            {
-                where: {
-                    CS_Id: CS_Id,
-                },
-                include: [{
-                    model: db.User,
-                    attributes: ['U_Avatar', 'U_Name']
-                }],
-            }
-        )
-        return newRecord ? newRecord : null
-    } catch (error) {
-        console.error('Error find comment record:', error);
-    }
-}
-
 let createComment = async (U_Id, CS_Id, detail, starsNumber) => {
     try {
         const newRecord = await db.Comments.create({
@@ -368,7 +420,7 @@ let deleteComment = async (U_Id, CS_Id,) => {
 };
 
 //--------------------------------------Cập nhật----------------------------------------------//
-const updateCoffeeStoreRecord = async (id, name, location, maxPeople, timeOpen, timeClose, detail) => {
+const updateCoffeeStoreRecord = async (id, name, location, maxPeople, timeOpen, timeClose, detail, avatar) => {
     try {
         // Tìm cửa hàng cà phê bằng ID
         const storeToUpdate = await db.Coffee_Store.findByPk(id);
@@ -376,6 +428,7 @@ const updateCoffeeStoreRecord = async (id, name, location, maxPeople, timeOpen, 
             throw new Error(`Store with id ${id} not found.`);
         }
         storeToUpdate.CS_Name = name;
+        storeToUpdate.CS_Avatar = avatar;
         storeToUpdate.CS_Location = location;
         storeToUpdate.CS_MaxPeople = maxPeople;
         storeToUpdate.CS_TimeOpen = timeOpen;
@@ -458,6 +511,8 @@ const updateServicesCoffeeStore = async (id, updatedServicesList) => {
 module.exports = {
     // Booking
     checkBookingConditionNoAccount,
+    findAllReserveTicketOfCoffeeStoreById,
+    findReserveTicketToMonth,
 
     // Find
     findCoffeeStoreById,
@@ -468,7 +523,6 @@ module.exports = {
     findTagsByCoffeeStoreId,
     findCoffeeStoreByIdManager,
     findCoffeeStoreIdByManagerId,
-    findReserveTicketToMonth,
     findAllHolidayToMonth,
     createHoLiday,
 

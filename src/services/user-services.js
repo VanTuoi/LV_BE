@@ -1,16 +1,16 @@
-const { Op } = require('sequelize');
+const { Op, where } = require('sequelize');
 const QRCode = require('qrcode')
 import db from "../models/index";
 import { creatJWT } from '../middleware/authentication'
 const bcrypt = require('bcrypt');
 
 let salt = bcrypt.genSaltSync(10);
-//-----------------------------------------Password--------------------------
+//----------------------------------------------Password--------------------------
 const handlehashPassword = async (password) => {
     let hashPassword = bcrypt.hashSync(password, salt)
     return hashPassword;
 }
-// -------------------------------------------------------------Account------------------------------------------------------//
+// ---------------------------------------------Account------------------------------------------------------//
 const findUserById = async (id) => {
     try {
         const user = await db.User.findByPk(id)
@@ -94,10 +94,10 @@ const changeAvatarbyId = async (id, newAvatar) => {
     }
 }
 
-// ----------------------------------------Booking ---------------------------------------------------------//
+// ---------------------------------------------Booking ---------------------------------------------------------//
 const checkTimeReserveTicket = async (Reserve_Ticket_ID) => {
     try {
-        let record = await findReserveTicketbyId(Reserve_Ticket_ID)
+        let record = await findReserveTicketById(Reserve_Ticket_ID)
         if (record) {
             let timeArrival = new Date(record.RT_DateTimeArrival)
             const currentTime = new Date();
@@ -137,7 +137,6 @@ const checkBookingConditionHaveAccount = async (bookingTime, userId, storeId) =>
     }
 };
 
-
 const findLatestStatusByReserveTicketId = async (Reserve_Ticket_ID) => {
     try {
         const latestStatusRecord = await db.Status_Reserve_Ticket.findOne({
@@ -145,7 +144,7 @@ const findLatestStatusByReserveTicketId = async (Reserve_Ticket_ID) => {
             order: [['createdAt', 'DESC']]
         })
 
-        console.log('latestStatusRecord', latestStatusRecord);
+        // console.log('latestStatusRecord', latestStatusRecord); 
         if (!latestStatusRecord) {
             console.log('No status found for the given ticket ID');
             return null;
@@ -177,26 +176,22 @@ const findTimeCreateLatestStatusByTicketId = async (Reserve_Ticket_ID) => {
     }
 };
 
-const findReserveTicketbyId = async (Id) => {
+const findReserveTicketById = async (Id) => {
     try {
-        const bookingbyId = await db.Reserve_Ticket.findOne({
-            where: {
-                RT_Id: Id,
-            },
+        const bookingById = await db.Reserve_Ticket.findByPk(Id, {
             include: [{
                 model: db.User,
                 attributes: ['U_Name']
             }]
         });
-        // console.log('booking', bookingbyId);
-        return bookingbyId || null;
+        return bookingById || null;
     } catch (error) {
-        console.error('Error finding last booking', error);
+        console.error('Error finding booking by ID:', error);
         throw error;
     }
 };
 
-const findReserveTicketbyIp = async (ip) => {
+const findReserveTicketByIp = async (ip) => {
     try {
         const bookingField = await db.Reserve_Ticket.findOne({
             where: {
@@ -210,14 +205,14 @@ const findReserveTicketbyIp = async (ip) => {
     }
 };
 
-const findAllReserveTicketbyIdUser = async (id) => {
+const findAllReserveTicketByIdUser = async (id) => {
     try {
         const bookingField = await db.Reserve_Ticket.findAll({
             where: {
                 U_Id: id,
             },
             order: [['createdAt', 'DESC']],
-            attributes: ['RT_DateTimeArrival', 'RT_NumberOfParticipants'],
+            attributes: ['RT_DateTimeArrival', 'RT_Id', 'RT_NumberOfParticipants',],
             include: [
                 {
                     model: db.Status_Reserve_Ticket,
@@ -227,23 +222,33 @@ const findAllReserveTicketbyIdUser = async (id) => {
                 },
                 {
                     model: db.Coffee_Store,
-                    attributes: ['CS_Id', 'CS_Name', 'CS_Location'],
+                    attributes: ['CS_Id', 'CS_Name', 'CS_Location', 'CS_Avatar'],
                 }
             ]
         });
         let list = []
-        bookingField && bookingField.forEach((item) => {
-            const Info = {
-                CS_Id: item.Coffee_Store.CS_Id,
-                CS_Name: item.Coffee_Store.CS_Name,
-                CS_Location: item.Coffee_Store.CS_Location,
-                RT_DateTimeArrival: item.RT_DateTimeArrival,
-                RT_NumberOfParticipants: item.RT_NumberOfParticipants,
-                SRT_Describe: item.Status_Reserve_Tickets[0].SRT_Describe,
-                RT_TimeCheckIn: item.Status_Reserve_Tickets[0].createdAt
-            };
-            list.push(Info);
-        });
+        if (bookingField) {
+            for (const item of bookingField) {
+                try {
+                    let qrCode = await createQrCode({ RT_Id: item.RT_Id });
+                    const Info = {
+                        CS_Id: item.Coffee_Store.CS_Id,
+                        RT_QrCode: qrCode,
+                        RT_Id: item.RT_Id,
+                        CS_Name: item.Coffee_Store.CS_Name,
+                        CS_Avatar: item.Coffee_Store.CS_Avatar,
+                        CS_Location: item.Coffee_Store.CS_Location,
+                        RT_DateTimeArrival: item.RT_DateTimeArrival,
+                        RT_NumberOfParticipants: item.RT_NumberOfParticipants,
+                        SRT_Describe: item.Status_Reserve_Tickets[0].SRT_Describe,
+                        RT_TimeCheckIn: item.Status_Reserve_Tickets[0].createdAt
+                    };
+                    list.push(Info);
+                } catch (error) {
+                    console.error('Error processing item:', error);
+                }
+            }
+        }
         return list;
     } catch (error) {
         console.error('Error finding all booking field by Id', error);
@@ -251,7 +256,7 @@ const findAllReserveTicketbyIdUser = async (id) => {
     }
 }
 
-const findAllReserveTicketTodaybyIdUser = async (id) => {
+const findAllReserveTicketTodayByIdUser = async (id) => {
 
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
@@ -376,7 +381,7 @@ const createQrCode = (data) => {
 };
 
 
-//-----------------------------------------------status save Store--------------------------------------------------//
+//------------------------------------Status favorites Store--------------------------------------------------//
 const findStatusSaveStore = async (idUser, isStore) => {
     try {
         const listSave = await db.Favorites_List.findOne({
@@ -395,7 +400,7 @@ const findStatusSaveAllStore = async (idUser) => {
             attributes: [],
             include: [{
                 model: db.Coffee_Store,
-                attributes: ['CS_Id', 'CS_Name', 'CS_Location'],
+                attributes: ['CS_Id', 'CS_Name', 'CS_Location', 'CS_Avatar'],
             }]
         });
 
@@ -407,6 +412,7 @@ const findStatusSaveAllStore = async (idUser) => {
                         CS_Id: coffeeStore.CS_Id,
                         CS_Name: coffeeStore.CS_Name,
                         CS_Location: coffeeStore.CS_Location,
+                        CS_Avatar: coffeeStore.CS_Avatar
                     };
                     list.push(coffeeStoreInfo);
                 });
@@ -452,7 +458,7 @@ const deleteSaveStore = async (idUser, isStore) => {
     }
 }
 
-// -------------------------------------------------- report------------------------------------------------------//
+// -------------------------------------Report------------------------------------------------------//
 let findReport = async (U_Id, CS_Id) => {
     try {
         const newRecord = await db.Reports.findOne({
@@ -545,6 +551,7 @@ const deleteReport = async (id) => {
     }
 }
 
+
 module.exports = {
     // Account
     findUserById,
@@ -557,11 +564,11 @@ module.exports = {
     findLatestStatusByReserveTicketId,              // --> No account
     findTimeCreateLatestStatusByTicketId,           // --> No account
 
-    findReserveTicketbyIp,
+    findReserveTicketByIp,
     findLastReserveTicketId,
-    findReserveTicketbyId,
-    findAllReserveTicketbyIdUser,
-    findAllReserveTicketTodaybyIdUser,
+    findReserveTicketById,
+    findAllReserveTicketByIdUser,
+    findAllReserveTicketTodayByIdUser,
 
     findStatusSaveStore,
     findStatusSaveAllStore,

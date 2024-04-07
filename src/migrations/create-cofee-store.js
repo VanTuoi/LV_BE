@@ -13,6 +13,10 @@ module.exports = {
         allowNull: false,
         type: Sequelize.STRING(50)
       },
+      CS_Avatar: {
+        allowNull: false,
+        type: Sequelize.TEXT
+      },
       CS_Location: {
         allowNull: false,
         type: Sequelize.STRING(200)

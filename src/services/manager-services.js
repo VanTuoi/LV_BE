@@ -63,7 +63,6 @@ const changePassworManager = async (id, newPassword) => {
     }
 };
 
-
 module.exports = {
     // Account
     findManagerById,

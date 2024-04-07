@@ -29,7 +29,7 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true
     },
     U_Avatar: {
-      type: DataTypes.BLOB('long'),
+      type: DataTypes.STRING,
       allowNull: true
     },
     U_Name: {

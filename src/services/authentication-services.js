@@ -19,7 +19,6 @@ const comparePassword = async (inputPassword, hashedPassword) => {
     }
 };
 
-
 //---------------------------------------------Find-----------------------------------//
 let findPhoneUser = async (phone) => {
     try {

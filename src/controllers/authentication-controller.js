@@ -4,7 +4,10 @@ import db from "../models/index";
 import auth from '../middleware/authentication'
 import createResponse from '../helpers/responseHelper';
 import authenticationServices from '../services/authentication-services'
+import userController from './user-controller'
+import managerController from './manager-controller'
 import userServices from '../services/user-services'
+import storeServices from '../services/store-services'
 import sendEmail from '../services/email-services'
 import jwt from 'jsonwebtoken';
 
@@ -75,6 +78,7 @@ const loginUser = async (req, res) => {
             account = await authenticationServices.findUserByPhone(phone)
             const jwtToken = await auth.createJWTDefault(account.U_Id);
             res.cookie("Jwt", jwtToken, { maxAge: 2 * 60 * 60 * 1000 })     // 2h
+
             return res.status(200).json(createResponse(0, 'Đăng nhập thành công', account));
         }
 
@@ -210,6 +214,7 @@ const loginManager = async (req, res) => {
             const jwtToken = await auth.createJWTDefault(fullManager.M_Id);
             // console.log('Cấp jwtToken m', jwtToken);
             res.cookie("Jwt", jwtToken, { maxAge: 2 * 60 * 60 * 1000 })         // httpOnly: true --> Rất quan trọng
+
             return res.status(200).json(createResponse(0, 'Đăng nhập thành công', account));
         }
 

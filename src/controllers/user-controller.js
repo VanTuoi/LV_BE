@@ -30,7 +30,7 @@ const updateInfor = async (req, res) => {
 
         // console.log('', id, name, email, phone, gender, birthday);
 
-        if (!name || !id || !email || !phone || !gender || !specialRequirements) {
+        if (!name || !id || !email || !phone || !gender) {
             return res.status(201).json(createResponse(-1, 'Dữ liệu cập nhật người dùng không đủ', null));
         }
         let haveUser = await userServices.findUserById(id)
@@ -145,7 +145,7 @@ const getReserveTicketsToday = async (req, res) => {
         if (!id) {
             return res.status(201).json(createResponse(-1, 'Dữ liệu từ người dùng không đủ', null));
         }
-        let list = await userServices.findAllReserveTicketTodaybyIdUser(id)
+        let list = await userServices.findAllReserveTicketTodayByIdUser(id)
 
         return res.status(200).json(createResponse(0, 'lấy danh sách đặt bàn hôm nay thành công', list));
 
@@ -162,7 +162,7 @@ const getAllReserveTickets = async (req, res) => {
         if (!id) {
             return res.status(201).json(createResponse(-1, 'Dữ liệu từ người dùng không đủ', null));
         }
-        let list = await userServices.findAllReserveTicketbyIdUser(id)
+        let list = await userServices.findAllReserveTicketByIdUser(id)
 
         return res.status(200).json(createResponse(0, 'lấy danh sách đặt bàn thành công', list));
 
@@ -200,6 +200,42 @@ const createReserveTicketHaveAccount = async (req, res) => {
     } catch (error) {
         console.error('Lỗi tạo vé đặt bàn', error);
         return res.status(500).json(createResponse(-5, 'Lỗi tạo vé đặt bàn', null));
+    }
+};
+
+const checkStatusAllReserveTicketOfUser = async (req, res) => {     // Kiểm tra trạng thái các vé đặt bàn
+
+    const { U_Id: userID, } = req.body;
+
+
+    if (!userID) {
+        console.log('Dữ liệu check trạng thái tất cả vé không đủ');
+        return res.status(201).json(createResponse(-1, 'Dữ liệu check trạng thái tất cả vé không đủ', null));
+    }
+    try {
+
+        const reserveTickets = await userServices.findAllReserveTicketByIdUser(userID)
+
+        if (!reserveTickets) {
+            console.log('Không tìm thấy danh sách vé đặt bàn của user');
+            return res.status(201).json(createResponse(-1, 'Không tìm thấy danh sách vé đặt bàn của user', null));
+
+        }
+        for (const reserveTicket of reserveTickets) {
+            const timeDifferenceInMinutes = await userServices.checkTimeReserveTicket(reserveTicket.RT_Id);
+            const status = reserveTicket.SRT_Describe;
+
+            console.log(`Kiểm tra vé đặt bàn có Id: ${reserveTicket.RT_Id} có trạng thái là : ${status}`);
+
+            if (status === 'Waiting' && timeDifferenceInMinutes < -15) {
+                await userServices.createStatusReserveTicket(reserveTicket.RT_Id, 'Late');
+            }
+        }
+        return res.status(201).json(createResponse(0, 'Duyệt lịch sử đặt bàn của người dùng thành công', null));
+    } catch (error) {
+        console.error('Lỗi khi duyệt lịch sử đặt bàn của người dùng', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi khi duyệt lịch sử đặt bàn của người dùng', null));
+
     }
 };
 
@@ -377,7 +413,6 @@ const deleteComment = async (req, res) => {
     }
 }
 
-
 const createReport = async (req, res) => {
     try {
         const { U_Id: id, CS_Id: CS_Id, R_Details: R_Details } = req.body;
@@ -491,6 +526,8 @@ module.exports = {
     getReserveTicketsToday,
     getAllReserveTickets,
     createReserveTicketHaveAccount,
+    checkStatusAllReserveTicketOfUser,
+
     statusFavouriteStore,
     createFavouriteStore,
     statusFavouriteAllStores,

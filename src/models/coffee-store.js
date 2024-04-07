@@ -52,6 +52,10 @@ module.exports = (sequelize, DataTypes) => {
         len: [0, 200]
       }
     },
+    CS_Avatar: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
     CS_Location: {
       type: DataTypes.STRING,
       allowNull: false,

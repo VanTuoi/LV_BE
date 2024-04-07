@@ -34,6 +34,19 @@ const getImageUrls = async (content) => {
     }
 };
 
+const getImageUrl = async (content) => {
+    try {
+        const result = await imageKit.listFiles({
+            searchQuery: `name:"${content}"`,
+            limit: 1
+        });
+        return result.length > 0 ? result[0].url : null;
+    } catch (error) {
+        console.error('Error fetching image:', error);
+        return null;
+    }
+};
+
 const deleteImage = async (imageNameOrUrl) => {
     // Giả định imageNameOrUrl là URL, cắt lấy phần tên file
     const fileName = imageNameOrUrl.split("/").pop();
@@ -57,5 +70,6 @@ const deleteImage = async (imageNameOrUrl) => {
 module.exports = {
     uploadImage,
     getImageUrls,
-    deleteImage
+    deleteImage,
+    getImageUrl
 };

@@ -9,6 +9,7 @@ import {
 
     checkTimeBooking,
     getReserveTicketsToday,
+    checkStatusAllReserveTicketOfUser,
     getAllReserveTickets,
     createReserveTicketHaveAccount,
     statusFavouriteStore,
@@ -45,6 +46,7 @@ function initUserRoutes() {
     router.post('/check-time-booking', checkTimeBooking);
     router.post('/all-reserver-ticket-today', getReserveTicketsToday);
     router.post('/all-reserver-ticket', getAllReserveTickets);
+    router.post('/check-status-all-reserve-of-user', checkStatusAllReserveTicketOfUser)
     router.post('/favourite-store', createFavouriteStore);
     router.post('/delete-favourite-store', deleteFavouriteStore);
     router.post('/status-favourite-store', statusFavouriteStore);

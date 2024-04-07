@@ -1,35 +1,35 @@
 import express from "express";
 import {
-    getStatusStore,
-    getCoffeeStorebyId,
-    getDetailCoffeeStorebyId,
-    getMenusCoffeeStorebyId,
-    getServicesCoffeeStorebyId,
-    getTagsCoffeeStorebyId,
-    getHolidaysStore,
-    getCommentStore,
-    getRatingStore,
-    getStoresByName,
+    getStatusCoffeeStoreById,
+    getCoffeeStoreById,
+    getDetailCoffeeStoreById,
+    getMenusCoffeeStoreById,
+    getServicesCoffeeStoreById,
+    getTagsCoffeeStoreById,
+    getHolidaysCoffeeStore,
+    getCommentCoffeeStore,
+    getRatingCoffeeStore,
+    getCoffeeStoresByName,
     checkTimeBooking,
-    getBannerStore,
+    getBannerCofeeStore,
     createReserveTicketNoAccount,
 } from '../controllers/store-controller';
 
 function initStoreRouters() {
     let router = express.Router();
 
-    router.get('/search', getStoresByName);
-    router.get('/detail', getDetailCoffeeStorebyId);
-    router.get('/holidays', getHolidaysStore);
-    router.get('/menus', getMenusCoffeeStorebyId);
-    router.get('/services', getServicesCoffeeStorebyId);
-    router.get('/comments', getCommentStore);
+    router.get('/search', getCoffeeStoresByName);
+    router.get('/detail', getDetailCoffeeStoreById);
+    router.get('/holidays', getHolidaysCoffeeStore);
+    router.get('/menus', getMenusCoffeeStoreById);
+    router.get('/services', getServicesCoffeeStoreById);
+    router.get('/comments', getCommentCoffeeStore);
     router.post('/check-time-booking', checkTimeBooking)                // Có ip
     router.post('/create-reserver', createReserveTicketNoAccount)        // Có ip
-    router.get('/rating', getRatingStore);
-    router.get('/image-banner', getBannerStore);
-    router.get('/tags', getTagsCoffeeStorebyId);
-    router.get('/:id', getCoffeeStorebyId);
+    router.get('/rating', getRatingCoffeeStore);
+    router.get('/image-banner', getBannerCofeeStore);
+    router.get('/tags', getTagsCoffeeStoreById);
+    router.get('/:id', getCoffeeStoreById);
 
     return router;
 }
