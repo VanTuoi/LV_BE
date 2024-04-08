@@ -234,21 +234,29 @@ const getTagsCoffeeStoreById = async (req, res) => {            //
 
 //--------------------------------------------------  Với khách vãng lai
 
-const checkTimeBooking = async (req, res) => {                  // Kiểm tra thời gian đặt bàn của vé
+const checkTimeBooking = async (req, res) => {
     try {
         const { RT_DateTimeArrival: bookingDate, CS_Id: storeID, RT_Ip: RT_Ip } = req.body;
-
-        // console.log(bookingDate, storeID, RT_Ip);
 
         if (!bookingDate || !storeID || !RT_Ip) {
             return res.status(201).json(createResponse(-1, 'Dữ liệu kiểm tra thời gian đặt bàn không đủ với không tài khoản', null));
         }
 
-        const isValidBookingTime = await storeServices.checkBookingConditionNoAccount(+bookingDate, RT_Ip, +storeID);
-        if (isValidBookingTime) {
-            return res.status(200).json(createResponse(0, `Tìm thông tin đặt bàn thành công cho ip ${RT_Ip}`, null));
+        const IdBooking = await userServices.findLatestReserveTicketByIp(RT_Ip);
+        // console.log('IdBooking ,  RT_Ip', IdBooking, RT_Ip);
+        if (IdBooking) {
+            const ReserveTicket = await userServices.findReserveTicketById(IdBooking);
+            const statusReserveTicket = await userServices.findLatestStatusByReserveTicketId(IdBooking);
+            const timecome = userServices.isTimeComeOfReserveTickeIsToday(ReserveTicket.RT_DateTimeArrival);
+            // console.log(ReserveTicket, statusReserveTicket, timecome);
+            if ((statusReserveTicket.SRT_Describe === 'Late' || statusReserveTicket.SRT_Describe === 'Waiting') && timecome) {
+                return res.status(200).json(createResponse(2, `Bạn đã đặt 1 bàn ${ReserveTicket.RT_DateTimeArrival}`, ReserveTicket.RT_DateTimeArrival));
+            } else {
+                return res.status(200).json(createResponse(0, `Có thể đặt bàn`, null));
+            }
+        } else {
+            return res.status(200).json(createResponse(0, `Bạn chưa đặt bàn lần nào`));
         }
-        return res.status(200).json(createResponse(1, `Bạn đã đặt trong khoảng thời gian gần đó`, isValidBookingTime));
     } catch (error) {
         console.error('Lỗi khi kiểm tra thời gian đặt bàn', error);
         return res.status(500).json(createResponse(-5, 'Lỗi khi kiểm tra thời gian đặt bàn', null));
@@ -265,18 +273,19 @@ const createReserveTicketNoAccount = async (req, res) => {      // Tạo vé đ�
             return res.status(201).json(createResponse(-1, 'Dữ liệu phiếu đặt bàn không đủ', null));
         }
 
-        const IdBooking = await userServices.findReserveTicketByIp(ip);
+        const IdBooking = await userServices.findLatestReserveTicketByIp(ip);
 
         if (IdBooking) {
-            let status = await userServices.findLatestStatusByReserveTicketId(IdBooking);
-            if (status === 'Waiting') {
-                return res.status(200).json(createResponse(0, 'Bạn đã đặt 1 bàn trước đó', null));
+            let reserveTicket = await userServices.findLatestStatusByReserveTicketId(IdBooking);
+            let timecome = await userServices.isTimeComeOfReserveTickeIsToday(reserveTicket.createdAt)
+            if (reserveTicket.SRT_Describe === 'Waiting' && timecome) {
+                return res.status(200).json(createResponse(1, 'Bạn đã đặt 1 bàn trong hôm nay', null));
             }
         }
 
         const newRecord = await userServices.createReserveTicket(bookingDate, numberOfParticipants, ip, null, +storeID);
         if (newRecord) {
-            const ID_lastBokking = await userServices.findReserveTicketByIp(ip);
+            const ID_lastBokking = await userServices.findLatestReserveTicketByIp(ip);
             userServices.createStatusReserveTicket(ID_lastBokking, 'Waiting');
             const qr = await userServices.createQrCode({ RT_Id: ID_lastBokking });
             return res.status(200).json(createResponse(0, 'Bạn đã đặt bàn thành công', qr));

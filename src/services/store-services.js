@@ -52,6 +52,58 @@ let findReserveTicketToMonth = async (month, id) => {
     }
 }
 
+
+const findReserveTicketToDay = async (startDay, endDay, id) => {
+    try {
+        const bookingField = await db.Reserve_Ticket.findAll({
+            where: {
+                CS_Id: id,
+                RT_DateTimeArrival: {
+                    [Op.between]: [startDay, endDay]
+                }
+            },
+            order: [['RT_DateTimeArrival', 'ASC']],
+            attributes: ['RT_DateTimeArrival', 'RT_Id', 'RT_NumberOfParticipants',],
+            include: [
+                {
+                    model: db.Status_Reserve_Ticket,
+                    attributes: ['SRT_Describe', 'createdAt'],
+                    order: [['createdAt', 'DESC']],
+                    limit: 1
+                },
+                {
+                    model: db.User,
+                    attributes: ['U_Name', 'U_PhoneNumber', 'U_SpecialRequirements', 'U_PrestigeScore']
+                }
+            ]
+        });
+        let list = []
+        if (bookingField) {
+            for (const item of bookingField) {
+                try {
+                    const Info = {
+                        R_Id: item.RT_Id,
+                        U_Name: item.User && item.User.U_Name ? item.User.U_Name : null,
+                        U_PhoneNumber: item.User && item.User.U_PhoneNumber ? item.User.U_PhoneNumber : null,
+                        U_SpecialRequirements: item.User && item.User.U_SpecialRequirements ? item.User.U_SpecialRequirements : null,
+                        U_PrestigeScore: item.User && item.User.U_PrestigeScore ? item.User.U_PrestigeScore : null,
+                        RT_DateTimeArrival: item.RT_DateTimeArrival,
+                        RT_NumberOfParticipants: item.RT_NumberOfParticipants,
+                        RT_Status: item.Status_Reserve_Tickets[0].SRT_Describe,
+                        RT_TimeCheckIn: item.Status_Reserve_Tickets[0].createdAt
+                    };
+                    list.push(Info);
+                } catch (error) {
+                    console.error('Error processing item:', error);
+                }
+            }
+        }
+        return list;
+    } catch (error) {
+        console.error('Error finding all booking field by Id store', error);
+        throw error;
+    }
+}
 const findAllReserveTicketOfCoffeeStoreById = async (id) => {
     try {
         const bookingField = await db.Reserve_Ticket.findAll({
@@ -513,6 +565,7 @@ module.exports = {
     checkBookingConditionNoAccount,
     findAllReserveTicketOfCoffeeStoreById,
     findReserveTicketToMonth,
+    findReserveTicketToDay,
 
     // Find
     findCoffeeStoreById,

@@ -217,6 +217,34 @@ const getReserveTicketsToMonth = async (req, res) => {
     }
 };
 
+const getReserveTicketsToDay = async (req, res) => {
+    try {
+
+        const { M_Id: managerId, startDay: startDay, endDay: endDay } = req.body;
+
+        if (!managerId || !startDay || !endDay) {
+            return res.status(200).json(createResponse(-1, 'Thiếu dữ liệu'));
+        }
+
+        const store = await storeServices.findCoffeeStoreById(managerId);
+
+        if (!store) {
+            return res.status(200).json(createResponse(0, 'Không tìm thấy cửa hàng'));
+        }
+
+        const listBooking = await storeServices.findReserveTicketToDay(startDay, endDay, store.CS_Id);
+
+        if (listBooking) {
+            return res.status(200).json(createResponse(0, 'Lấy danh sách đặt bàn theo ngày thành công', listBooking));
+        }
+        return res.status(200).json(createResponse(-1, 'Không có lịch đặt bàn trong ngày này', null));
+
+    } catch (error) {
+        console.error('Lỗi khi lấy lịch đặt bàn theo ngày', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi khi lấy lịch đặt bàn theo ngày', null));
+    }
+};
+
 const getHolidays = async (req, res) => {
     try {
         const month = req.query.AS_Holiday;
@@ -264,8 +292,6 @@ const checkIn = async (req, res) => {
 
     const { M_Id: manager_Id, RT_Id: RT_Id } = req.body;
 
-    console.log('RT_Id', RT_Id);
-
     if (!RT_Id || !manager_Id) {
         return res.status(201).json(createResponse(-1, 'Dữ liệu check in không đủ', null));
     }
@@ -277,8 +303,11 @@ const checkIn = async (req, res) => {
 
     try {
         const timeDifferenceInMinutes = await userServices.checkTimeReserveTicket(RT_Id);
-        const status = await userServices.findLatestStatusByReserveTicketId(RT_Id);
+        const StatusByReserveTicket = await userServices.findLatestStatusByReserveTicketId(RT_Id);
+        const status = StatusByReserveTicket.SRT_Describe;
         const timeCheckIn = await userServices.findTimeCreateLatestStatusByTicketId(RT_Id);
+
+        // console.log('RT_Id', RT_Id, timeDifferenceInMinutes, status, timeCheckIn);
 
         if (!status || !timeDifferenceInMinutes) {
             return res.status(200).json(createResponse(0, 'Không tìm thấy thông tin đặt bàn', null));
@@ -294,17 +323,28 @@ const checkIn = async (req, res) => {
             return res.status(200).json(createResponse(0, 'Bạn đã trễ hẹn', { detail, timeCheckIn }));
         }
 
-        if (timeDifferenceInMinutes > 45 && status === 'Waiting') {
+        let maxTimeDelay = 15;          // Thời gian giữa bàn cơ bản
+        let user = await userServices.findUserByReserveTicketId(RT_Id)
+        if (user.U_Id) {
+            maxTimeDelay = await userServices.getMaxTimeDelay(user.U_Id)
+            console.log('have user', user.U_Id, maxTimeDelay, timeDifferenceInMinutes);
+        }
+
+        if (timeDifferenceInMinutes > maxTimeDelay && status === 'Waiting') {
             return res.status(200).json(createResponse(0, 'Chưa đến hẹn', { detail, timeCheckIn: null }));
         }
 
-        if (timeDifferenceInMinutes < -15) {
+        if (timeDifferenceInMinutes < - maxTimeDelay) {
+            if (user) {
+                await userServices.changeExp(user.U_Id, -2)
+            }// Khách vãng lai thì k có
             const timeCreate = await userServices.createStatusReserveTicket(RT_Id, 'Late');
             return res.status(200).json(createResponse(0, 'Bạn đã trễ hẹn', { detail, timeCreate }));
         }
-
-
-        if ((timeDifferenceInMinutes >= -45 || timeDifferenceInMinutes <= 15) && status === 'Waiting') {
+        if ((timeDifferenceInMinutes >= - maxTimeDelay || timeDifferenceInMinutes <= maxTimeDelay) && status === 'Waiting') {
+            if (user) {
+                await userServices.changeExp(user.U_Id, +1)
+            }// Khách vãng lai thì k có
             const timeCreate = await userServices.createStatusReserveTicket(RT_Id, 'Has Arrived');
             return res.status(200).json(createResponse(0, 'Bạn đã check in thành công', { detail, timeCreate }));
         }
@@ -443,6 +483,7 @@ module.exports = {
     deleteImageBanner,
     updateCoffeeStore,
     getReserveTicketsToMonth,
+    getReserveTicketsToDay,
     getHolidays,
     createHoliday,
     deleteHoliday,

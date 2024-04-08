@@ -10,6 +10,7 @@ import {
     getCoffeeStoreByIdManager,
     createCoffeeStore,
     updateCoffeeStore,
+    getReserveTicketsToDay,
     getReserveTicketsToMonth,
     getHolidays,
     createHoliday,
@@ -37,6 +38,7 @@ function initManagerRoutes() {
     router.post('/get-full-store', getCoffeeStoreByIdManager);
     router.post('/create-holiday', createHoliday);
     router.get('/get-holiday', getHolidays);
+    router.post('/get-reserve-tickets-to-day', getReserveTicketsToDay);
     router.post('/get-reserve-tickets', getReserveTicketsToMonth);
     router.post('/check-status-all-reserve-of-store', checkStatusAllReserveTicketOfStore)
     router.post('/create-store', createCoffeeStore);

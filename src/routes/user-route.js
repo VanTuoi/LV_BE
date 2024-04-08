@@ -6,6 +6,7 @@ import {
     changePassword,
     getAvatar,
     changeAvatar,
+    getExp,
 
     checkTimeBooking,
     getReserveTicketsToday,
@@ -40,6 +41,7 @@ function initUserRoutes() {
     router.post('/change-password', changePassword)
     router.patch('/change-avatar', changeAvatar)
     router.post('/get-avatar', getAvatar)
+    router.post('/get-exp', getExp)
 
 
     // Store

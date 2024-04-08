@@ -21,6 +21,30 @@ const findUserById = async (id) => {
     }
 };
 
+const findUserByReserveTicketId = async (id) => {
+    try {
+        const user = await db.Reserve_Ticket.findByPk(id, {
+            include: {
+                model: db.User
+            }
+        });
+        return user ? user : null;
+    } catch (error) {
+        console.error('Error finding user:', error);
+        return null;
+    }
+};
+
+const findExpUserById = async (id) => {
+    try {
+        const user = await db.User.findByPk(id)
+        return user && user.U_PrestigeScore ? user.U_PrestigeScore : null;
+    } catch (error) {
+        console.error('Error finding user details:', error);
+        return null;
+    }
+};
+
 const updateInforUser = async (id, name, phone, email, gender, birthday, specialRequirements) => {
     try {
         const user = await db.User.findByPk(id);
@@ -94,6 +118,71 @@ const changeAvatarbyId = async (id, newAvatar) => {
     }
 }
 
+const getMaxTimeDelay = async (id) => {
+
+    try {
+        const user = await db.User.findByPk(id)
+        if (user) {
+            let currentExp = user.U_PrestigeScore;
+            if (currentExp < 0) {
+                return 0
+            } else if (currentExp <= 5) {
+                return 10
+            } else if (currentExp <= 10) {
+                return 20
+            } else if (currentExp <= 30) {
+                return 30
+            } else if (currentExp <= 50) {
+                return 45
+            } else {
+                return 60
+            }
+        } else {
+            return null
+        }
+    } catch (error) {
+        console.error('Error finding user details:', error);
+        return null;
+    }
+};
+
+const changeExp = async (id, value) => {
+    const t = await db.sequelize.transaction(); // Bắt đầu một giao dịch mới
+
+    try {
+        // Tìm người dùng với khóa chính và áp dụng khóa Pessimistic trong quá trình giao dịch
+        const user = await db.User.findByPk(id, { lock: t.LOCK.UPDATE, transaction: t });
+
+        if (!user) {
+            console.error('User not found');
+            await t.rollback(); // Rollback giao dịch nếu không tìm thấy người dùng
+            return null;
+        }
+
+        if (isNaN(value)) {
+            console.error('Invalid value');
+            await t.rollback(); // Rollback giao dịch nếu giá trị không hợp lệ
+            return null;
+        }
+
+        // Cập nhật điểm uy tín
+        user.U_PrestigeScore += Number(value);
+        if (user.U_PrestigeScore < 0) {
+            user.U_PrestigeScore = 0;
+        }
+
+        await user.save({ transaction: t }); // Lưu thay đổi với giao dịch
+        await t.commit(); // Commit giao dịch khi mọi thứ thành công
+
+        return user;
+    } catch (error) {
+        await t.rollback(); // Rollback giao dịch nếu có lỗi xảy ra
+        console.error('Error updating exp user:', error);
+        return null;
+    }
+};
+
+
 // ---------------------------------------------Booking ---------------------------------------------------------//
 const checkTimeReserveTicket = async (Reserve_Ticket_ID) => {
     try {
@@ -137,24 +226,44 @@ const checkBookingConditionHaveAccount = async (bookingTime, userId, storeId) =>
     }
 };
 
+
 const findLatestStatusByReserveTicketId = async (Reserve_Ticket_ID) => {
     try {
         const latestStatusRecord = await db.Status_Reserve_Ticket.findOne({
             where: { RT_Id: Reserve_Ticket_ID },
             order: [['createdAt', 'DESC']]
-        })
+        });
 
-        // console.log('latestStatusRecord', latestStatusRecord); 
         if (!latestStatusRecord) {
             console.log('No status found for the given ticket ID');
             return null;
         }
 
-        return latestStatusRecord.dataValues.SRT_Describe;
+        const { SRT_Describe, createdAt, } = latestStatusRecord;
+        return { SRT_Describe, createdAt };
     } catch (error) {
         console.error('Error finding the latest status record:', error);
         return null;
     }
+};
+
+const isTimeComeOfReserveTickeIsToday = (date) => {
+    const today = new Date(); // Lấy ngày hiện tại
+    const inputDate = new Date(date);
+
+    const todayDate = today.getDate();
+    const todayMonth = today.getMonth();
+    const todayYear = today.getFullYear();
+
+    const inputDateDate = inputDate.getDate();
+    const inputDateMonth = inputDate.getMonth();
+    const inputDateYear = inputDate.getFullYear();
+
+    return (
+        todayDate === inputDateDate &&
+        todayMonth === inputDateMonth &&
+        todayYear === inputDateYear
+    );
 };
 
 const findTimeCreateLatestStatusByTicketId = async (Reserve_Ticket_ID) => {
@@ -181,7 +290,7 @@ const findReserveTicketById = async (Id) => {
         const bookingById = await db.Reserve_Ticket.findByPk(Id, {
             include: [{
                 model: db.User,
-                attributes: ['U_Name']
+                attributes: ['U_Name',]
             }]
         });
         return bookingById || null;
@@ -191,19 +300,21 @@ const findReserveTicketById = async (Id) => {
     }
 };
 
-const findReserveTicketByIp = async (ip) => {
+const findLatestReserveTicketByIp = async (ip) => {
     try {
-        const bookingField = await db.Reserve_Ticket.findOne({
+        const latestBookingField = await db.Reserve_Ticket.findOne({
             where: {
                 RT_Ip: ip,
             },
+            order: [['createdAt', 'DESC']], // Sắp xếp theo createdAt giảm dần
         });
-        return bookingField ? bookingField.dataValues.RT_Id : null;
+        return latestBookingField ? latestBookingField.dataValues.RT_Id : null;
     } catch (error) {
-        console.error('Error finding booking field by IP', error);
+        console.error('Error finding latest booking field by IP', error);
         throw error;
     }
 };
+
 
 const findAllReserveTicketByIdUser = async (id) => {
     try {
@@ -340,15 +451,27 @@ const createReserveTicket = async (bookingDate, numberOfParticipants, userIp, us
 };
 
 const createStatusReserveTicket = async (Reserve_Ticket_ID, status) => {
+    let transaction;
+
     try {
+        // Bắt đầu một transaction
+        transaction = await db.sequelize.transaction();
+
         const newRecord = await db.Status_Reserve_Ticket.create({
             RT_Id: Reserve_Ticket_ID,
             SRT_Describe: status,
-        });
+        }, { transaction }); // Đảm bảo rằng việc tạo record mới được thực hiện trong một transaction
+
+        // Nếu không có lỗi, commit transaction
+        await transaction.commit();
+
         return newRecord.updatedAt;
     } catch (error) {
+        // Nếu có lỗi xảy ra, rollback transaction
+        if (transaction) await transaction.rollback();
+
         console.error('Error creating booking record:', error);
-        return null
+        return null;
     }
 };
 
@@ -555,6 +678,11 @@ const deleteReport = async (id) => {
 module.exports = {
     // Account
     findUserById,
+    findUserByReserveTicketId,
+    isTimeComeOfReserveTickeIsToday,
+    changeExp,
+    getMaxTimeDelay,
+    findExpUserById,
     updateInforUser,
     changePasswordUser,
     findAvatarbyId,
@@ -564,7 +692,7 @@ module.exports = {
     findLatestStatusByReserveTicketId,              // --> No account
     findTimeCreateLatestStatusByTicketId,           // --> No account
 
-    findReserveTicketByIp,
+    findLatestReserveTicketByIp,
     findLastReserveTicketId,
     findReserveTicketById,
     findAllReserveTicketByIdUser,

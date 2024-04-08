@@ -2,6 +2,7 @@ import userServices from '../services/user-services'
 import authenticationServices from '../services/authentication-services'
 import createResponse from '../helpers/responseHelper';
 import storeServices from '../services/store-services'
+import { DATE } from 'sequelize';
 
 // --------------------------------------------Account----------------------------------------------------//
 
@@ -95,6 +96,26 @@ const getAvatar = async (req, res) => {
     } catch (error) {
         console.error('Lỗi khi tìm ảnh đại diện người dùng', error);
         return res.status(500).json(createResponse(-5, 'Lỗi khi tìm ảnh đại diện  người dùng', null));
+    }
+}
+
+const getExp = async (req, res) => {
+    try {
+        const { U_Id: id, } = req.body;
+
+        if (!id) {
+            return res.status(201).json(createResponse(-1, 'Không tìm thấy id', null));
+        }
+        let expUser = await userServices.findExpUserById(id)
+
+        if (!expUser) {
+            return res.status(200).json(createResponse(-2, 'Không tìm thấy điểm uy tín người dùng', null));
+        }
+
+        return res.status(200).json(createResponse(0, 'Tìm thấy điểm uy tín người dùng', expUser));
+    } catch (error) {
+        console.error('Lỗi khi tìm điểm uy tín người dùng', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi khi tìm  điểm uy tín người dùng', null));
     }
 }
 
@@ -207,7 +228,6 @@ const checkStatusAllReserveTicketOfUser = async (req, res) => {     // Kiểm tr
 
     const { U_Id: userID, } = req.body;
 
-
     if (!userID) {
         console.log('Dữ liệu check trạng thái tất cả vé không đủ');
         return res.status(201).json(createResponse(-1, 'Dữ liệu check trạng thái tất cả vé không đủ', null));
@@ -223,12 +243,26 @@ const checkStatusAllReserveTicketOfUser = async (req, res) => {     // Kiểm tr
         }
         for (const reserveTicket of reserveTickets) {
             const timeDifferenceInMinutes = await userServices.checkTimeReserveTicket(reserveTicket.RT_Id);
-            const status = reserveTicket.SRT_Describe;
+            const StatusByReserveTicket = await userServices.findLatestStatusByReserveTicketId(reserveTicket.RT_Id);
+            const status = StatusByReserveTicket.SRT_Describe
+            const maxTimeDelay = await userServices.getMaxTimeDelay(userID)
 
-            console.log(`Kiểm tra vé đặt bàn có Id: ${reserveTicket.RT_Id} có trạng thái là : ${status}`);
+            function getCurrentTimeWithMilliseconds() {
+                const now = new Date();
+                const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'short' };
+                const formattedDate = now.toLocaleDateString('en-US', options);
+                const timeParts = now.toLocaleTimeString('en-US', { hour12: false }).split(':');
+                const milliseconds = now.getMilliseconds().toString().padStart(4, '0');
+                const timezone = now.toString().match(/\(([A-Za-z\s].*)\)/)[1];
 
-            if (status === 'Waiting' && timeDifferenceInMinutes < -15) {
+                return `${formattedDate} ${timeParts[0]}:${timeParts[1]}:${timeParts[2].substring(0, 2)}.${milliseconds} ${timezone}`;
+            }
+            // console.log(`Kiểm tra vé đặt bàn có Id: ${reserveTicket.RT_Id} có trạng thái là : ${status} vào lúc ${getCurrentTimeWithMilliseconds()}`);
+
+            if (status === 'Waiting' && timeDifferenceInMinutes <= maxTimeDelay) {
                 await userServices.createStatusReserveTicket(reserveTicket.RT_Id, 'Late');
+                await userServices.changeExp(userID, -2)                // Muộn thì -2
+                console.log('Update status ReserveTicket');
             }
         }
         return res.status(201).json(createResponse(0, 'Duyệt lịch sử đặt bàn của người dùng thành công', null));
@@ -520,6 +554,7 @@ module.exports = {
     updateInfor,
     changePassword,
     getAvatar,
+    getExp,
     changeAvatar,
     // Store
     checkTimeBooking,
