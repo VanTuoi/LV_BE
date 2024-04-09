@@ -70,6 +70,14 @@ module.exports = (sequelize, DataTypes) => {
         len: [0, 20000]
       }
     },
+    CS_AcceptOnline: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+      allowNull: false
+    },
+    CS_MaxPeople: {
+      type: DataTypes.INTEGER,
+    },
     CS_MaxPeople: {
       type: DataTypes.INTEGER,
     },

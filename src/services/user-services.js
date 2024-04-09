@@ -1,4 +1,5 @@
-const { Op, where } = require('sequelize');
+const { Op, literal, where } = require('sequelize');
+const Sequelize = require('sequelize');
 const QRCode = require('qrcode')
 import db from "../models/index";
 import { creatJWT } from '../middleware/authentication'
@@ -206,10 +207,11 @@ const checkTimeReserveTicket = async (Reserve_Ticket_ID) => {
 
 const checkBookingConditionHaveAccount = async (bookingTime, userId, storeId) => {
     try {
-        const startTime = new Date(bookingTime - ((2 * 60 * 60 * 1000 + 60 * 1000))); // Thời gian bắt đầu (bookingTime)
-        const endTime = new Date(bookingTime + (2 * 60 * 60 * 1000 - 60 * 1000)); // Thời gian kết thúc (2 giờ sau bookingTime)
-        // Tìm xem có bất kỳ đặt bàn nào trong khoảng thời gian từ startTime đến endTime không
-        const bookingCount = await db.Reserve_Ticket.count({
+        const startTime = new Date(bookingTime - (1 * 60 * 60 * 1000 + 59 * 60 * 1000));
+        const endTime = new Date(bookingTime + (1 * 60 * 60 * 1000 + 59 * 60 * 1000));
+
+        // Tìm xem có bất kỳ đặt bàn nào trong khoảng thời gian từ startTime đến endTime không, kèm theo trạng thái
+        const bookings = await db.Reserve_Ticket.findAll({
             where: {
                 U_Id: userId,
                 CS_Id: storeId,
@@ -217,15 +219,32 @@ const checkBookingConditionHaveAccount = async (bookingTime, userId, storeId) =>
                     [Op.between]: [startTime, endTime]
                 }
             },
+            include: [{
+                model: db.Status_Reserve_Ticket,
+                as: 'Status_Reserve_Tickets', // Sử dụng bí danh chính xác như đã định nghĩa trong quan hệ
+                order: [['createdAt', 'DESC']],
+                limit: 1,
+                attributes: ['SRT_Describe'], // Chỉ lấy trường 'SRT_Describe'
+            }],
         });
-        // Trả về true nếu không có đặt bàn nào trong khoảng thời gian đó, ngược lại trả về false
-        return bookingCount === 0;
+
+        // console.log('bookings', bookings);
+        let count = 0;
+        if (bookings.length > 0) {
+            for (const booking of bookings) {
+                const bookingStatus = booking.Status_Reserve_Tickets ? booking.Status_Reserve_Tickets[0].SRT_Describe : null;
+                if (bookingStatus === 'Waiting') {
+                    return count++;
+                }
+            }
+        }
+        return count === 0;
+
     } catch (error) {
-        console.error('Error checkIng booking condition with have account', error);
+        console.error('Error checking booking condition with account', error);
         throw error;
     }
 };
-
 
 const findLatestStatusByReserveTicketId = async (Reserve_Ticket_ID) => {
     try {
@@ -604,7 +623,7 @@ let findAllReportOfUser = async (U_Id) => {
             },
             include: [{
                 model: db.Coffee_Store,
-                attributes: ['CS_Name']
+                attributes: ['CS_Name', 'CS_Avatar']
             }],
         });
 
@@ -616,6 +635,7 @@ let findAllReportOfUser = async (U_Id) => {
             return {
                 ...reportJson,
                 CS_Name: reportJson.Coffee_Store.CS_Name,
+                CS_Avatar: reportJson.Coffee_Store.CS_Avatar,
             };
         });
 

@@ -4,6 +4,22 @@ import userServices from '../services/user-services'
 import imageServices from '../services/image-services'
 
 //--------------------------------------------- Tìm kiếm, lấy thông tin chung----------------------------------------------//
+const getTopCoffeeStores = async (req, res) => {
+    try {
+
+        let newRecord = await storeServices.findTopCoffee()
+
+        if (newRecord) {
+            return res.status(200).json(createResponse(0, 'Tìm thấy top', newRecord));
+        } else {
+            return res.status(200).json(createResponse(1, 'Không tìm thấy top'));
+        }
+    } catch (error) {
+        console.log('Lỗi tìm cửa hàng theo id', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi tìm cửa hàng theo id'));
+    }
+}
+
 const getStatusCoffeeStoreById = async (req, res) => {        // Xem cửa hàng có bị khóa hay không
 
     const id = req.params.id;
@@ -31,12 +47,16 @@ const getStatusCoffeeStoreById = async (req, res) => {        // Xem cửa hàng
 const getCoffeeStoresByName = async (req, res) => {           //  Tìm kiếm cửa hàng theo tên
 
     const name = req.query.store_name;
+    const time = req.query.time;
+    const people = req.query.people;
+
+    console.log(name, time, people);
 
     try {
         if (!name) {
             return res.status(200).json(createResponse(-1, 'Vui lòng nhập tên cửa hàng cần tìm'));
         }
-        let newRecord = await storeServices.findAllCoffeeStoreByName(name)
+        let newRecord = await storeServices.findAllCoffeeStoreByName(name, time, people)
         if (newRecord) {
             return res.status(200).json(createResponse(0, 'Tìm thấy cửa hàng danh sách cửa hàng', newRecord));
         } else {
@@ -127,10 +147,15 @@ const getServicesCoffeeStoreById = async (req, res) => {        // Lấy dịch 
 const getHolidaysCoffeeStore = async (req, res) => {              // Lấy danh sách ngày nghỉ
     try {
         const month = req.query.AS_Holiday;
+        const id = req.query.CS_Id;
 
-        const listHoliday = await storeServices.findAllHolidayToMonth(month);
+        if (!month || !id) {
+            return res.status(200).json(createResponse(1, 'Thiếu dữ liệu', listHoliday));
+        }
+        const listHoliday = await storeServices.findAllHolidayToMonth(id, month);
 
         if (listHoliday) {
+            // console.log('listHoliday', month, id, listHoliday);
             return res.status(200).json(createResponse(0, 'Lấy danh sách ngày nghĩ thành công', listHoliday));
         }
         return res.status(200).json(createResponse(-1, 'Lấy danh sách ngày nghĩ không thành công', null));
@@ -300,8 +325,8 @@ const createReserveTicketNoAccount = async (req, res) => {      // Tạo vé đ�
 };
 
 
-
 module.exports = {
+    getTopCoffeeStores,
     getStatusCoffeeStoreById,
     getCoffeeStoresByName,
     getCoffeeStoreById,

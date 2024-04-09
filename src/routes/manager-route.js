@@ -16,6 +16,7 @@ import {
     createHoliday,
     deleteHoliday,
     checkIn,
+    historyCheckIn,
     uploadImgaePageDetail,
     getImageBanner,
     deleteImageBanner,
@@ -37,13 +38,15 @@ function initManagerRoutes() {
     router.post('/is-manager-store', isManagerAssignedToStore);
     router.post('/get-full-store', getCoffeeStoreByIdManager);
     router.post('/create-holiday', createHoliday);
-    router.get('/get-holiday', getHolidays);
+    router.post('/delete-holiday', deleteHoliday);
+    router.post('/get-holiday', getHolidays);
     router.post('/get-reserve-tickets-to-day', getReserveTicketsToDay);
     router.post('/get-reserve-tickets', getReserveTicketsToMonth);
     router.post('/check-status-all-reserve-of-store', checkStatusAllReserveTicketOfStore)
     router.post('/create-store', createCoffeeStore);
     router.patch('/update-store', updateCoffeeStore);
     router.post('/check-in', checkIn);
+    router.post('/history-check-in', historyCheckIn);
     router.post('/upload-image-page-detail', uploadImgaePageDetail);
     router.post('/upload-image-banner', uploadImgaePageDetail);
     router.post('/get-images-banner', getImageBanner);

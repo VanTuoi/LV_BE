@@ -1,6 +1,6 @@
 import express from "express";
 import {
-    getStatusCoffeeStoreById,
+    getTopCoffeeStores,
     getCoffeeStoreById,
     getDetailCoffeeStoreById,
     getMenusCoffeeStoreById,
@@ -18,6 +18,8 @@ import {
 function initStoreRouters() {
     let router = express.Router();
 
+
+    router.get('/get-top-store', getTopCoffeeStores);
     router.get('/search', getCoffeeStoresByName);
     router.get('/detail', getDetailCoffeeStoreById);
     router.get('/holidays', getHolidaysCoffeeStore);

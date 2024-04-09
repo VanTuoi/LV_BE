@@ -25,6 +25,11 @@ module.exports = {
         allowNull: false,
         type: Sequelize.STRING(20000)
       },
+      CS_AcceptOnline: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+        allowNull: false
+      },
       CS_MaxPeople: {
         type: Sequelize.INTEGER
       },

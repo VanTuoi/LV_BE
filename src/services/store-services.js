@@ -52,7 +52,6 @@ let findReserveTicketToMonth = async (month, id) => {
     }
 }
 
-
 const findReserveTicketToDay = async (startDay, endDay, id) => {
     try {
         const bookingField = await db.Reserve_Ticket.findAll({
@@ -104,6 +103,7 @@ const findReserveTicketToDay = async (startDay, endDay, id) => {
         throw error;
     }
 }
+
 const findAllReserveTicketOfCoffeeStoreById = async (id) => {
     try {
         const bookingField = await db.Reserve_Ticket.findAll({
@@ -153,8 +153,95 @@ const findAllReserveTicketOfCoffeeStoreById = async (id) => {
     }
 }
 
+const findHistoryCheckIn = async (id) => {
+    try {
+        const now = new Date();
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+
+        const bookingField = await db.Reserve_Ticket.findAll({
+            where: {
+                CS_Id: id,
+                RT_DateTimeArrival: {
+                    [Op.between]: [startOfDay, endOfDay]
+                }
+            },
+            attributes: ['RT_DateTimeArrival', 'RT_Id', 'RT_NumberOfParticipants'],
+            include: [
+                {
+                    model: db.Status_Reserve_Ticket,
+                    where: {
+                        SRT_Describe: {
+                            [Op.or]: ['Has Arrived', 'Late']
+                        }
+                    },
+                    attributes: ['SRT_Describe', 'createdAt'],
+                },
+                {
+                    model: db.User,
+                    attributes: ['U_Name', 'U_PhoneNumber', 'U_SpecialRequirements', 'U_PrestigeScore']
+                }
+            ]
+        });
+        let list = bookingField.map(item => {
+            // Khi map, chúng ta giả định rằng mỗi item có ít nhất một Status_Reserve_Ticket
+            const statusReserveTicket = item.Status_Reserve_Tickets[0];
+            return {
+                R_Id: item.RT_Id,
+                U_Name: item.User ? item.User.U_Name : null,
+                U_PhoneNumber: item.User ? item.User.U_PhoneNumber : null,
+                U_SpecialRequirements: item.User ? item.User.U_SpecialRequirements : null,
+                U_PrestigeScore: item.User ? item.User.U_PrestigeScore : null,
+                RT_DateTimeArrival: item.RT_DateTimeArrival,
+                RT_NumberOfParticipants: item.RT_NumberOfParticipants,
+                RT_Status: statusReserveTicket.SRT_Describe,
+                RT_TimeCheckIn: statusReserveTicket.createdAt
+            };
+        });
+
+        // Sắp xếp 'list' dựa trên 'RT_TimeCheckIn' từ mới nhất đến cũ nhất
+        list.sort((a, b) => new Date(b.RT_TimeCheckIn) - new Date(a.RT_TimeCheckIn));
+        return list;
+    } catch (error) {
+        console.error('Error finding all booking field by Id store', error);
+        throw error;
+    }
+}
+
+
 
 //-------------------------------------------- Tìm kiếm --------------------------------//
+
+const findTopCoffee = async () => {
+    try {
+        const topRatedStores = await db.Comments.findAll({
+            attributes: ['CS_Id', [db.sequelize.fn('AVG', db.sequelize.col('C_StarsNumber')), 'Avg_Stars']],
+            include: [
+                {
+                    model: db.Coffee_Store,
+                    attributes: ['CS_Name', 'CS_Location', 'CS_Avatar'],
+                }
+            ],
+            group: ['CS_Id'],
+            order: [[db.sequelize.literal('Avg_Stars'), 'DESC']],
+            limit: 5
+        });
+        // console.log(topRatedStores, topRatedStores);
+        return topRatedStores.map(store => {
+            return {
+                CS_Id: store.CS_Id,
+                CS_Avg_Stars: parseFloat(store.dataValues.Avg_Stars),
+                CS_Name: store.Coffee_Store.CS_Name,
+                CS_Location: store.Coffee_Store.CS_Location,
+                CS_Avatar: store.Coffee_Store.CS_Avatar
+            };
+        });
+    } catch (error) {
+        console.error('Error finding topRatedStores', error);
+        return null;
+    }
+};
+
 const findCoffeeStoreById = async (id) => {
     try {
         const coffeeStore = await db.Coffee_Store.findByPk(id, {
@@ -163,6 +250,7 @@ const findCoffeeStoreById = async (id) => {
                 'CS_Name',
                 'CS_Avatar',
                 'CS_Location',
+                'CS_AcceptOnline',
                 'CS_MaxPeople',
                 'CS_TimeOpen',
                 'CS_TimeClose',
@@ -187,13 +275,38 @@ const findCoffeeStoreById = async (id) => {
     }
 };
 
-const findAllCoffeeStoreByName = async (name) => {
+const findAllCoffeeStoreByName = async (name, time, people) => {
     try {
         const coffeeStores = await db.Coffee_Store.findAll({
-            where: literal(`LOWER(CS_Name) LIKE LOWER('%${name}%')`),           // Tìm kiếm hoa và thường
-            attributes: ['CS_Id', 'CS_Name', 'CS_Avatar', 'CS_Location', 'CS_MaxPeople', 'CS_TimeOpen', 'CS_TimeClose'],
+            attributes: [
+                'CS_Id',
+                'CS_Name',
+                'CS_Avatar',
+                'CS_Location',
+                'CS_MaxPeople',
+                'CS_TimeOpen',
+                'CS_TimeClose',
+                [literal('(SELECT SCS_Describe FROM Status_Coffee_Store WHERE Coffee_Store.CS_Id = Status_Coffee_Store.CS_Id ORDER BY createdAt DESC LIMIT 1)'), 'SCS_Describe']
+            ],
+            where: {
+                [Op.and]: [
+                    literal(`LOWER(CS_Name) LIKE LOWER('%${name}%')`),
+                    { CS_MaxPeople: { [Op.gte]: people } },
+                    {
+                        CS_TimeOpen: { [Op.lte]: time },
+                        CS_TimeClose: { [Op.gte]: time }
+                    }
+                ]
+            }
         });
-        return coffeeStores;
+        const list = [];
+        for (const coffeeStore of coffeeStores) {
+            if (coffeeStore.dataValues.SCS_Describe === 'Normal') {
+
+                list.push(coffeeStore);
+            }
+        }
+        return list;
     } catch (error) {
         console.error('Error finding all coffee store :', error);
         return null;
@@ -275,25 +388,23 @@ const findCoffeeStoreIdByManagerId = async (managerId) => {
     }
 };
 
-let findAllHolidayToMonth = async (month) => {
+let findAllHolidayToMonth = async (id, month) => {
     try {
 
-        const startDate = new Date(+month);
-        startDate.setDate(1);   // ngày bắt đầu của tháng
+        const date = new Date(month);
+        const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+        const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
 
-        const endDate = new Date(startDate);
-        endDate.setMonth(startDate.getMonth() + 1);
-        endDate.setDate(0);     // ngày kết thúc của tháng
 
         const listHoliday = await db.Activity_Schedule.findAll({
             where: {
+                CS_Id: id,
                 AS_Holiday: {
-                    [Op.between]: [startDate, endDate]
+                    [Op.between]: [startOfMonth, endOfMonth]
                 }
             },
             attributes: ['AS_Holiday']
         });
-
         return listHoliday;
     } catch (error) {
         console.error('Error getting holiday list:', error);
@@ -336,7 +447,7 @@ let findAllCommentsOfStore = async (CS_Id) => {
 
 //------------------------------------- Tạo mới-----------------------------------------//
 
-const createCoffeeStore = async (id, name, location, detail, maxPeople, timeOpen, timeClose, avatar) => {
+const createCoffeeStore = async (id, name, location, detail, acceptOnline, maxPeople, timeOpen, timeClose, avatar) => {
     try {
 
         let coverTimeOpen = new Date(timeOpen)
@@ -347,6 +458,7 @@ const createCoffeeStore = async (id, name, location, detail, maxPeople, timeOpen
             CS_Avatar: avatar,
             CS_Location: location,
             CS_Detail: detail,
+            CS_AcceptOnline: acceptOnline,
             CS_MaxPeople: +maxPeople,
             CS_TimeOpen: coverTimeOpen,
             CS_TimeClose: coverTimeClose,
@@ -418,6 +530,22 @@ let createHoLiday = async (AS_Holiday, CS_Id) => {
     }
 }
 
+let deleteHoliday = async (AS_Holiday, CS_Id) => {
+    try {
+        const numberDestroyed = await db.Activity_Schedule.destroy({
+            where: {
+                AS_Holiday: AS_Holiday,
+                CS_Id: CS_Id
+            }
+        });
+        return numberDestroyed > 0 ? true : false;
+    } catch (error) {
+        console.error('Error deleting Activity Schedule record:', error);
+        return false;
+    }
+}
+
+
 let createComment = async (U_Id, CS_Id, detail, starsNumber) => {
     try {
         const newRecord = await db.Comments.create({
@@ -472,7 +600,7 @@ let deleteComment = async (U_Id, CS_Id,) => {
 };
 
 //--------------------------------------Cập nhật----------------------------------------------//
-const updateCoffeeStoreRecord = async (id, name, location, maxPeople, timeOpen, timeClose, detail, avatar) => {
+const updateCoffeeStoreRecord = async (id, name, location, acceptOnline, maxPeople, timeOpen, timeClose, detail, avatar) => {
     try {
         // Tìm cửa hàng cà phê bằng ID
         const storeToUpdate = await db.Coffee_Store.findByPk(id);
@@ -482,6 +610,7 @@ const updateCoffeeStoreRecord = async (id, name, location, maxPeople, timeOpen, 
         storeToUpdate.CS_Name = name;
         storeToUpdate.CS_Avatar = avatar;
         storeToUpdate.CS_Location = location;
+        storeToUpdate.CS_AcceptOnline = acceptOnline;
         storeToUpdate.CS_MaxPeople = maxPeople;
         storeToUpdate.CS_TimeOpen = timeOpen;
         storeToUpdate.CS_TimeClose = timeClose;
@@ -566,8 +695,9 @@ module.exports = {
     findAllReserveTicketOfCoffeeStoreById,
     findReserveTicketToMonth,
     findReserveTicketToDay,
-
+    findHistoryCheckIn,
     // Find
+    findTopCoffee,
     findCoffeeStoreById,
     findAllCoffeeStoreByName,
     findCoffeeStoreDetailById,
@@ -578,6 +708,7 @@ module.exports = {
     findCoffeeStoreIdByManagerId,
     findAllHolidayToMonth,
     createHoLiday,
+    deleteHoliday,
 
     // Create
     createCoffeeStore,
