@@ -10,14 +10,14 @@ import {
     getCommentCoffeeStore,
     getRatingCoffeeStore,
     getCoffeeStoresByName,
-    checkTimeBooking,
     getBannerCofeeStore,
+
+    checkTimeBooking,
     createReserveTicketNoAccount,
 } from '../controllers/store-controller';
 
 function initStoreRouters() {
     let router = express.Router();
-
 
     router.get('/get-top-store', getTopCoffeeStores);
     router.get('/search', getCoffeeStoresByName);

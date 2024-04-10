@@ -1,6 +1,7 @@
 import adminServices from '../services/admin-services'
 import createResponse from '../helpers/responseHelper';
 
+//--------------------------------------------------- Account--------------------------//
 const login = async (req, res) => {
     const { A_UserName: userName, A_Password: password } = req.body;
 
@@ -9,10 +10,8 @@ const login = async (req, res) => {
     }
 
     try {
-
         if (userName !== 'admin') {
             return res.status(200).json(createResponse(1, 'Không tìm thấy tên đăng nhập', null));
-
         }
 
         if (password !== 'admin') {
@@ -25,9 +24,9 @@ const login = async (req, res) => {
         console.error('Lỗi khi đăng nhập admin', error);
         return res.status(200).json(createResponse(-5, 'Lỗi khi đăng nhập admin', null));
     }
-
 }
 
+//----------------------------------------------------User------------------------------//
 const getAllUsers = async (req, res) => {
 
     try {
@@ -106,6 +105,7 @@ const deleteUser = async (req, res) => {
     }
 
 }
+//----------------------------------------------------Manager------------------------------//
 
 const getAllManagers = async (req, res) => {
 
@@ -265,6 +265,7 @@ const deleteStore = async (req, res) => {
 
 }
 
+//----------------------------------------------------Report------------------------------//
 
 const getAllReports = async (req, res) => {
 
@@ -323,22 +324,26 @@ const deleteReport = async (req, res) => {
 
 }
 
+
 module.exports = {
+    // Account
     login,
+    //User
     getAllUsers,
     lockUser,
     unlockUser,
     deleteUser,
+    //Manager
     getAllManagers,
     lockManager,
     unlockManager,
     deleteManager,
-
+    //Store
     getAllStores,
     lockStore,
     unlockStore,
     deleteStore,
-
+    //Report
     getAllReports,
     changeStatusReport,
     deleteReport

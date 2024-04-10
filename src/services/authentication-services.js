@@ -1,8 +1,7 @@
 import db from "../models/index";
-import jwt from 'jsonwebtoken';
 const bcrypt = require('bcrypt');
-
 let salt = bcrypt.genSaltSync(10);
+
 //---------------------------------------------Password------------------------------//
 const handlehashPassword = async (password) => {
     let hashPassword = bcrypt.hashSync(password, salt)
@@ -19,8 +18,8 @@ const comparePassword = async (inputPassword, hashedPassword) => {
     }
 };
 
-//---------------------------------------------Find-----------------------------------//
-let findPhoneUser = async (phone) => {
+//---------------------------------------------User--------------------------------------//
+const findPhoneUser = async (phone) => {
     try {
         let havePhone = await db.User.findOne({
             where: { U_PhoneNumber: phone }
@@ -30,9 +29,9 @@ let findPhoneUser = async (phone) => {
         console.log('Error find Phone user', error);
         return null
     }
-}
+};
 
-let findEmailUser = async (email) => {
+const findEmailUser = async (email) => {
     try {
         let haveEmail = await db.User.findOne({
             where: { U_Email: email }
@@ -42,49 +41,9 @@ let findEmailUser = async (email) => {
         console.log('Error find email user', error);
         return null
     }
-}
+};
 
-let findPhoneManager = async (phone) => {
-    try {
-        let havePhone = await db.Manager.findOne({
-            where: { M_PhoneNumber: phone }
-        })
-        return havePhone ? true : false
-    } catch (error) {
-        console.log('Error find Phone manager', error);
-        return null
-    }
-}
-
-let findPasswordOfUserByPhone = async (phone) => {
-    try {
-        let haveUser = await db.User.findOne({
-            where: { U_PhoneNumber: phone },
-            attributes: ['U_Password'],
-        })
-        // console.log('haveUser', haveUser);
-        return haveUser ? haveUser : null
-    } catch (e) {
-        console.log(e)
-        return null
-    }
-}
-
-let findPasswordOfManagerByPhone = async (phone) => {
-    try {
-        let haveManager = await db.Manager.findOne({
-            where: { M_PhoneNumber: phone },
-            attributes: ['M_Password'],
-        })
-        // console.log('haveUser', haveUser); 
-        return haveManager ? haveManager : null
-    } catch (e) {
-        console.log(e)
-        return null
-    }
-}
-
-let findUserByPhone = async (phone) => {
+const findUserByPhone = async (phone) => {
     try {
         let haveUser = await db.User.findOne({
             where: { U_PhoneNumber: phone },
@@ -92,12 +51,12 @@ let findUserByPhone = async (phone) => {
         })
         return haveUser ? haveUser : null
     } catch (e) {
-        console.log(e)
+        console.log('Error find user by phone', e)
         return null
     }
-}
+};
 
-let findUserByEmail = async (email) => {
+const findUserByEmail = async (email) => {
     try {
         let haveUser = await db.User.findOne({
             where: { U_Email: email },
@@ -105,23 +64,10 @@ let findUserByEmail = async (email) => {
         })
         return haveUser ? haveUser : null
     } catch (e) {
-        console.log(e)
+        console.log('Error find user by email', e)
         return null
     }
-}
-
-let findManagerByPhone = async (phone) => {
-    try {
-        let haveManager = await db.Manager.findOne({
-            where: { M_PhoneNumber: phone },
-            attributes: ['M_Id', 'M_Name'],
-        })
-        return haveManager ? haveManager : null
-    } catch (e) {
-        console.log(e)
-        return null
-    }
-}
+};
 
 const findLatestStatusByUserId = async (id) => {
     try {
@@ -139,6 +85,91 @@ const findLatestStatusByUserId = async (id) => {
     } catch (error) {
         console.error(`Error finding the latest status user record:  ${id}`, error);
         return null;
+    }
+};
+
+const findPasswordOfUserByPhone = async (phone) => {
+    try {
+        let haveUser = await db.User.findOne({
+            where: { U_PhoneNumber: phone },
+            attributes: ['U_Password'],
+        })
+        return haveUser ? haveUser : null
+    } catch (e) {
+        console.log('Error find password user', e)
+        return null
+    }
+};
+
+const createUser = async (name, email, phone, password, gender, birthday, score) => {
+    try {
+        let passwordHash = await handlehashPassword(password)
+        const newRecord = await db.User.create({
+            U_Name: name,
+            U_Password: passwordHash,
+            U_PhoneNumber: phone,
+            U_Email: email,
+            U_Gender: gender,
+            U_Birthday: birthday,
+            U_PrestigeScore: score,
+        });
+        return newRecord;
+    } catch (error) {
+        console.log('Error create User', error);
+        return null
+    }
+};
+
+const createStatusUser = async (id, status) => {
+    try {
+        const newRecord = await db.Status_User.create({
+            U_Id: id,
+            SU_Describe: status,
+        });
+        return newRecord.updatedAt;
+    } catch (error) {
+        console.error('Error creating status user:', error);
+        return null
+    }
+};
+
+//---------------------------------------------Manager--------------------------------------//
+const findPhoneManager = async (phone) => {
+    try {
+        let havePhone = await db.Manager.findOne({
+            where: { M_PhoneNumber: phone }
+        })
+        return havePhone ? true : false
+    } catch (error) {
+        console.log('Error find Phone manager', error);
+        return null
+    }
+};
+
+const findManagerByPhone = async (phone) => {
+    try {
+        let haveManager = await db.Manager.findOne({
+            where: { M_PhoneNumber: phone },
+            attributes: ['M_Id', 'M_Name'],
+        })
+        return haveManager ? haveManager : null
+    } catch (e) {
+        console.log(e)
+        return null
+    }
+};
+
+const findPasswordOfManagerByPhone = async (phone) => {
+    try {
+        let haveManager = await db.Manager.findOne({
+            where: { M_PhoneNumber: phone },
+            attributes: ['M_Password'],
+        })
+        // console.log('haveUser', haveUser); 
+        return haveManager ? haveManager : null
+    } catch (e) {
+        console.log(e)
+        return null
     }
 };
 
@@ -161,28 +192,7 @@ const findLatestStatusByManagerId = async (id) => {
     }
 };
 
-//----------------------------------------- Create------------------------------//
-let createUser = async (name, email, phone, password, gender, birthday, score) => {
-    try {
-        let passwordHash = await handlehashPassword(password)
-        const newRecord = await db.User.create({
-            U_Name: name,
-            U_Password: passwordHash,
-            U_PhoneNumber: phone,
-            U_Email: email,
-            U_Gender: gender,
-            U_Birthday: birthday,
-            U_PrestigeScore: score,
-        });
-        // console.log('newRecord', newRecord);
-        return newRecord;
-    } catch (error) {
-        console.log('Error create User', error);
-        return null
-    }
-}
-
-let createManager = async (name, email, phone, password, gender, birthday) => {
+const createManager = async (name, email, phone, password, gender, birthday) => {
     try {
         let passwordHash = await handlehashPassword(password)
 
@@ -191,25 +201,12 @@ let createManager = async (name, email, phone, password, gender, birthday) => {
             M_Password: passwordHash,
             M_PhoneNumber: phone,
             M_Gender: gender,
+            M_Email: email,
             M_Birthday: birthday,
         });
-        // console.log('newRecord', newRecord);
         return newRecord;
     } catch (error) {
         console.log('Error create manager', error);
-        return null
-    }
-}
-
-const createStatusUser = async (id, status) => {
-    try {
-        const newRecord = await db.Status_User.create({
-            U_Id: id,
-            SU_Describe: status,
-        });
-        return newRecord.updatedAt;
-    } catch (error) {
-        console.error('Error creating status user:', error);
         return null
     }
 };
@@ -228,25 +225,25 @@ const createStatusManager = async (id, status) => {
 };
 
 module.exports = {
-
+    // Password
     comparePassword,
-    // Find
+
+    // User
     findPhoneUser,
     findEmailUser,
+    findUserByEmail,
+    findPasswordOfUserByPhone,
+    findLatestStatusByUserId,
+    createUser,
+    createStatusUser,
+
+    // Manager
     findPhoneManager,
     findUserByPhone,
-    findUserByEmail,
     findManagerByPhone,
-    findPasswordOfUserByPhone,
     findPasswordOfManagerByPhone,
-    findLatestStatusByUserId,
     findLatestStatusByManagerId,
-
-    // Create
-    createUser,
     createManager,
-    createStatusUser,
     createStatusManager,
-
 }
 

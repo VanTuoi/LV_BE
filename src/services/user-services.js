@@ -1,8 +1,6 @@
 const { Op, literal, where } = require('sequelize');
-const Sequelize = require('sequelize');
 const QRCode = require('qrcode')
 import db from "../models/index";
-import { creatJWT } from '../middleware/authentication'
 const bcrypt = require('bcrypt');
 
 let salt = bcrypt.genSaltSync(10);
@@ -10,7 +8,8 @@ let salt = bcrypt.genSaltSync(10);
 const handlehashPassword = async (password) => {
     let hashPassword = bcrypt.hashSync(password, salt)
     return hashPassword;
-}
+};
+
 // ---------------------------------------------Account------------------------------------------------------//
 const findUserById = async (id) => {
     try {
@@ -40,6 +39,44 @@ const findExpUserById = async (id) => {
     try {
         const user = await db.User.findByPk(id)
         return user && user.U_PrestigeScore ? user.U_PrestigeScore : null;
+    } catch (error) {
+        console.error('Error finding user details:', error);
+        return null;
+    }
+};
+
+const findAvatarbyId = async (id) => {
+    try {
+        const user = await db.User.findByPk(id)
+        return user.U_Avatar ? user.U_Avatar : null;
+    } catch (error) {
+        console.error('Error finding avatar user :', error);
+        return null;
+    }
+};
+
+const getMaxTimeDelay = async (id) => {
+
+    try {
+        const user = await db.User.findByPk(id)
+        if (user) {
+            let currentExp = user.U_PrestigeScore;
+            if (currentExp < 0) {
+                return 0
+            } else if (currentExp <= 5) {
+                return 10
+            } else if (currentExp <= 10) {
+                return 20
+            } else if (currentExp <= 30) {
+                return 30
+            } else if (currentExp <= 50) {
+                return 45
+            } else {
+                return 60
+            }
+        } else {
+            return null
+        }
     } catch (error) {
         console.error('Error finding user details:', error);
         return null;
@@ -90,16 +127,6 @@ const changePasswordUser = async (id, newPassword) => {
     }
 };
 
-const findAvatarbyId = async (id) => {
-    try {
-        const user = await db.User.findByPk(id)
-        return user.U_Avatar ? user.U_Avatar : null;
-    } catch (error) {
-        console.error('Error finding avatar user :', error);
-        return null;
-    }
-}
-
 const changeAvatarbyId = async (id, newAvatar) => {
     try {
 
@@ -115,34 +142,6 @@ const changeAvatarbyId = async (id, newAvatar) => {
         return user;
     } catch (error) {
         console.error('Error finding change avatar', error);
-        return null;
-    }
-}
-
-const getMaxTimeDelay = async (id) => {
-
-    try {
-        const user = await db.User.findByPk(id)
-        if (user) {
-            let currentExp = user.U_PrestigeScore;
-            if (currentExp < 0) {
-                return 0
-            } else if (currentExp <= 5) {
-                return 10
-            } else if (currentExp <= 10) {
-                return 20
-            } else if (currentExp <= 30) {
-                return 30
-            } else if (currentExp <= 50) {
-                return 45
-            } else {
-                return 60
-            }
-        } else {
-            return null
-        }
-    } catch (error) {
-        console.error('Error finding user details:', error);
         return null;
     }
 };
@@ -182,7 +181,6 @@ const changeExp = async (id, value) => {
         return null;
     }
 };
-
 
 // ---------------------------------------------Booking ---------------------------------------------------------//
 const checkTimeReserveTicket = async (Reserve_Ticket_ID) => {
@@ -246,6 +244,25 @@ const checkBookingConditionHaveAccount = async (bookingTime, userId, storeId) =>
     }
 };
 
+const isTimeComeOfReserveTickeIsToday = (date) => {
+    const today = new Date(); // Lấy ngày hiện tại
+    const inputDate = new Date(date);
+
+    const todayDate = today.getDate();
+    const todayMonth = today.getMonth();
+    const todayYear = today.getFullYear();
+
+    const inputDateDate = inputDate.getDate();
+    const inputDateMonth = inputDate.getMonth();
+    const inputDateYear = inputDate.getFullYear();
+
+    return (
+        todayDate === inputDateDate &&
+        todayMonth === inputDateMonth &&
+        todayYear === inputDateYear
+    );
+};
+
 const findLatestStatusByReserveTicketId = async (Reserve_Ticket_ID) => {
     try {
         const latestStatusRecord = await db.Status_Reserve_Ticket.findOne({
@@ -264,25 +281,6 @@ const findLatestStatusByReserveTicketId = async (Reserve_Ticket_ID) => {
         console.error('Error finding the latest status record:', error);
         return null;
     }
-};
-
-const isTimeComeOfReserveTickeIsToday = (date) => {
-    const today = new Date(); // Lấy ngày hiện tại
-    const inputDate = new Date(date);
-
-    const todayDate = today.getDate();
-    const todayMonth = today.getMonth();
-    const todayYear = today.getFullYear();
-
-    const inputDateDate = inputDate.getDate();
-    const inputDateMonth = inputDate.getMonth();
-    const inputDateYear = inputDate.getFullYear();
-
-    return (
-        todayDate === inputDateDate &&
-        todayMonth === inputDateMonth &&
-        todayYear === inputDateYear
-    );
 };
 
 const findTimeCreateLatestStatusByTicketId = async (Reserve_Ticket_ID) => {
@@ -334,7 +332,6 @@ const findLatestReserveTicketByIp = async (ip) => {
     }
 };
 
-
 const findAllReserveTicketByIdUser = async (id) => {
     try {
         const bookingField = await db.Reserve_Ticket.findAll({
@@ -384,7 +381,7 @@ const findAllReserveTicketByIdUser = async (id) => {
         console.error('Error finding all booking field by Id', error);
         throw error;
     }
-}
+};
 
 const findAllReserveTicketTodayByIdUser = async (id) => {
 
@@ -435,7 +432,7 @@ const findAllReserveTicketTodayByIdUser = async (id) => {
         console.error('Error finding all booking to day field by Id', error);
         throw error;
     }
-}
+};
 
 const findLastReserveTicketId = async (userId, storeId) => {
     try {
@@ -523,8 +520,8 @@ const createQrCode = (data) => {
 };
 
 
-//------------------------------------Status favorites Store--------------------------------------------------//
-const findStatusSaveStore = async (idUser, isStore) => {
+//-----------------------------------Favorites Store--------------------------------------------------//
+const findStatusFavoritesStore = async (idUser, isStore) => {
     try {
         const listSave = await db.Favorites_List.findOne({
             where: { U_Id: idUser, CS_Id: isStore },
@@ -534,8 +531,9 @@ const findStatusSaveStore = async (idUser, isStore) => {
         console.error(`Error finding a save store with id user ${idUser} and store is ${isStore}`, error);
         return null;
     }
-}
-const findStatusSaveAllStore = async (idUser) => {
+};
+
+const findStatusFavoritesAllStores = async (idUser) => {
     try {
         const favoriteStores = await db.Favorites_List.findAll({
             where: { U_Id: idUser },
@@ -566,8 +564,9 @@ const findStatusSaveAllStore = async (idUser) => {
         console.error(`Error when searching favorite store list with user ID ${idUser}`, error);
         return null;
     }
-}
-const createSaveStore = async (idUser, isStore) => {
+};
+
+const createFavoritesStore = async (idUser, isStore) => {
     try {
         const listSave = await db.Favorites_List.create({
             U_Id: idUser,
@@ -579,8 +578,9 @@ const createSaveStore = async (idUser, isStore) => {
         console.error(`Error create a save store with id user ${idUser} and store is ${isStore}`, error);
         return null;
     }
-}
-const deleteSaveStore = async (idUser, isStore) => {
+};
+
+const deleteFavoritesStore = async (idUser, isStore) => {
     try {
         const result = await db.Favorites_List.destroy({
             where: {
@@ -598,7 +598,7 @@ const deleteSaveStore = async (idUser, isStore) => {
         console.error(`Error deleting save store with id user ${idUser} and store id ${isStore}`, error);
         return false;
     }
-}
+};
 
 // -------------------------------------Report------------------------------------------------------//
 let findReport = async (U_Id, CS_Id) => {
@@ -613,7 +613,7 @@ let findReport = async (U_Id, CS_Id) => {
     } catch (error) {
         console.error('Error find report record:', error);
     }
-}
+};
 
 let findAllReportOfUser = async (U_Id) => {
     try {
@@ -658,7 +658,7 @@ let createReport = async (U_Id, CS_Id, detail) => {
     } catch (error) {
         console.error('Error creating report record:', error);
     }
-}
+};
 
 const updateReport = async (id, detail) => {
     try {
@@ -677,7 +677,7 @@ const updateReport = async (id, detail) => {
         console.error('Error change report', error);
         return null;
     }
-}
+};
 
 const deleteReport = async (id) => {
     try {
@@ -692,14 +692,13 @@ const deleteReport = async (id) => {
         console.error('Error deleting report', error);
         return null;
     }
-}
+};
 
 
 module.exports = {
     // Account
     findUserById,
     findUserByReserveTicketId,
-    isTimeComeOfReserveTickeIsToday,
     changeExp,
     getMaxTimeDelay,
     findExpUserById,
@@ -708,27 +707,28 @@ module.exports = {
     findAvatarbyId,
     changeAvatarbyId,
 
-    // Store
+    // Booking
+    checkBookingConditionHaveAccount,
+    checkTimeReserveTicket,
     findLatestStatusByReserveTicketId,              // --> No account
     findTimeCreateLatestStatusByTicketId,           // --> No account
-
+    isTimeComeOfReserveTickeIsToday,
     findLatestReserveTicketByIp,
     findLastReserveTicketId,
     findReserveTicketById,
     findAllReserveTicketByIdUser,
     findAllReserveTicketTodayByIdUser,
-
-    findStatusSaveStore,
-    findStatusSaveAllStore,
-    checkBookingConditionHaveAccount,
-    checkTimeReserveTicket,
-
+    createReserveTicket,
     createStatusReserveTicket,
     createQrCode,
-    createReserveTicket,
-    createSaveStore,
-    deleteSaveStore,
 
+    // Favorites 
+    findStatusFavoritesStore,
+    findStatusFavoritesAllStores,
+    createFavoritesStore,
+    deleteFavoritesStore,
+
+    // Report
     findReport,
     findAllReportOfUser,
     createReport,

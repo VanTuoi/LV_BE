@@ -7,20 +7,23 @@ import {
     changePassword,
 
     isManagerAssignedToStore,
-    getCoffeeStoreByIdManager,
-    createCoffeeStore,
-    updateCoffeeStore,
-    getReserveTicketsToDay,
-    getReserveTicketsToMonth,
-    getHolidays,
-    createHoliday,
-    deleteHoliday,
     checkIn,
     historyCheckIn,
-    uploadImgaePageDetail,
-    getImageBanner,
-    deleteImageBanner,
     checkStatusAllReserveTicketOfStore,
+    getHolidays,
+    getImageBanner,
+    getReserveTicketsToDay,
+    getReserveTicketsToMonth,
+    getCoffeeStoreByIdManager,
+    updateCoffeeStore,
+    createCoffeeStore,
+    createHoLidayOfCoffeeStore,
+    deleteHolidayOfCoffeeStore,
+    uploadImgaePageDetail,
+    deleteImageBanner,
+
+    overViewBookingWithDay,
+    overViewBooking,
 } from '../controllers/manager-controller';
 
 
@@ -37,8 +40,8 @@ function initManagerRoutes() {
     // Store
     router.post('/is-manager-store', isManagerAssignedToStore);
     router.post('/get-full-store', getCoffeeStoreByIdManager);
-    router.post('/create-holiday', createHoliday);
-    router.post('/delete-holiday', deleteHoliday);
+    router.post('/create-holiday', createHoLidayOfCoffeeStore);
+    router.post('/delete-holiday', deleteHolidayOfCoffeeStore);
     router.post('/get-holiday', getHolidays);
     router.post('/get-reserve-tickets-to-day', getReserveTicketsToDay);
     router.post('/get-reserve-tickets', getReserveTicketsToMonth);
@@ -52,6 +55,9 @@ function initManagerRoutes() {
     router.post('/get-images-banner', getImageBanner);
     router.delete('/delete-images-banner', deleteImageBanner);
 
+    // Overview
+    router.post('/get-over-view-booking-by-day', overViewBookingWithDay);
+    router.post('/get-over-view-booking-by-month', overViewBooking);
 
 
     return router;

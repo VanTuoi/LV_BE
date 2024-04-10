@@ -1,12 +1,12 @@
 import db from "../models/index";
 const Sequelize = require('sequelize');
 
+//-----------------------------------------------------User-------------------------------------------------//
 const findAllUsers = async () => {
     try {
         const newRecord = await db.User.findAll({
             attributes: {
                 include: [
-                    // Sử dụng Sequelize.literal để lấy SU_Describe và đặt tên cho nó
                     [Sequelize.literal(`(
                         SELECT SU_Describe
                         FROM Status_User
@@ -22,14 +22,14 @@ const findAllUsers = async () => {
             if (user.U_Password) {
                 return {
                     ...user.get({ plain: true }), // Hoặc user.toJSON(),
-                    U_Password: 'Đã ẩn'
+                    U_Password: 'Đã ẩn password'
                 };
             }
             return user.get({ plain: true });
         });
         return flattenedUsers;
     } catch (error) {
-        console.error('Error find all user', error);
+        console.error('Error find all users', error);
         return null;
     }
 };
@@ -91,12 +91,12 @@ const deleteUser = async (userId) => {
     }
 }
 
+//-----------------------------------------------------Manager-------------------------------------------------//
 const findAllManagers = async () => {
     try {
         const newRecord = await db.Manager.findAll({
             attributes: {
                 include: [
-                    // Sử dụng Sequelize.literal để lấy SU_Describe và đặt tên cho nó
                     [Sequelize.literal(`(
                         SELECT SM_Describe
                         FROM Status_Manager
@@ -179,13 +179,13 @@ const deleteManager = async (managerId) => {
     }
 }
 
+//-----------------------------------------------------Store-------------------------------------------------//
 const findAllStores = async () => {
     try {
         const newRecord = await db.Coffee_Store.findAll({
             attributes: {
                 exclude: ['CS_Detail'],
                 include: [
-                    // Sử dụng Sequelize.literal để lấy SU_Describe và đặt tên cho nó
                     [Sequelize.literal(`(
                         SELECT SCS_Describe
                         FROM Status_Coffee_Store
@@ -274,17 +274,17 @@ const deleteStore = async (coffee_Id) => {
         });
         return deletedManager ? true : false;
     } catch (error) {
-        console.error('Error deleting manager', error);
+        console.error('Error deleting store', error);
         return null;
     }
 }
 
+//-----------------------------------------------------Report-------------------------------------------------//
 const findAllReports = async () => {
     try {
         const newRecord = await db.Reports.findAll({
             attributes: {
                 include: [
-                    // Sử dụng Sequelize.literal để lấy SU_Describe và đặt tên cho nó
                     [Sequelize.literal(`(
                         SELECT U_Name
                         FROM User
@@ -343,22 +343,23 @@ const deleteReport = async (id) => {
     }
 }
 
-
 module.exports = {
+    //  User
     findAllUsers,
     lockUser,
     unlockUser,
     deleteUser,
+    // Manager
     findAllManagers,
     lockManager,
     unlockManager,
     deleteManager,
-
+    // Store
     findAllStores,
     lockStore,
     unlocStore,
     deleteStore,
-
+    // Report
     findAllReports,
     changeStatusReport,
     deleteReport

@@ -30,23 +30,18 @@ const createJWTChangePassword = (id) => {
 };
 
 const verifyTokenUser = async (req, res, next) => {
-    const key = process.env.JWT_SECRET;
-    const token = req.cookies.Jwt;
-
-    // Kiểm tra xem token có đúng định dạng không
-    const tokenRegex = /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_.+/=]*$/;
-
-    if (!token || !tokenRegex.test(token)) {
-        res.cookie("Jwt", '', { maxAge: 2 }) // Xóa token
-        return res.status(201).json(createResponse(-1, 'Token không hợp lệ hoặc không tồn tại', null));
-    }
-
-    if (!token || !tokenRegex.test(token)) {
-        res.cookie("Jwt", '', { maxAge: 2 }) // Xóa token
-        return res.status(201).json(createResponse(-1, 'Token không hợp lệ hoặc không tồn tại', null));
-    }
-
     try {
+        const key = process.env.JWT_SECRET;
+        const token = req.cookies.Jwt;
+
+        // Kiểm tra xem token có đúng định dạng không
+        const tokenRegex = /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_.+/=]*$/;
+
+        if (!token || !tokenRegex.test(token)) {
+            res.cookie("Jwt", '', { maxAge: 2 }) // Xóa token
+            return res.status(201).json(createResponse(-1, 'Token không hợp lệ hoặc không tồn tại', null));
+        }
+
         const decodedToken = jwt.verify(token, key);
 
         if (!decodedToken || !decodedToken.exp) {
@@ -75,9 +70,9 @@ const verifyTokenUser = async (req, res, next) => {
 
         req.body.U_Id = decodedToken.data.Id;
         next();
-
     } catch (error) {
-        // console.error('Error verifying JWT:', error);
+        // Xử lý lỗi một cách an toàn
+        console.error('Lỗi khi xác minh mã JWT:', error);
         res.cookie("Jwt", '', { maxAge: 2 })        // Xóa token
         return res.status(200).json(createResponse(-3, 'Token không hợp lệ', null));
     }
@@ -126,7 +121,6 @@ const verifyTokenManager = async (req, res, next) => {
         return res.status(200).json(createResponse(-3, 'Token không hợp lệ', null));
     }
 };
-
 
 module.exports = {
     createJWTDefault,

@@ -18,10 +18,10 @@ import {
     statusFavouriteAllStores,
     deleteFavouriteStore,
 
-    createComment,
+    createCommentOfUser,
     getComment,
     changeComment,
-    deleteComment,
+    deleteCommentOfUser,
 
     createReport,
     getReport,
@@ -55,13 +55,13 @@ function initUserRoutes() {
     router.post('/status-favourite-all-store', statusFavouriteAllStores);
     router.post('/create-reserver', createReserveTicketHaveAccount);
 
-    router.post('/create-comment', createComment);
     router.post('/get-comment', getComment);
+    router.post('/create-comment', createCommentOfUser);
     router.post('/change-comment', changeComment);
-    router.post('/delete-comment', deleteComment);
+    router.post('/delete-comment', deleteCommentOfUser);
 
-    router.post('/create-report', createReport);
     router.post('/get-report', getReport);
+    router.post('/create-report', createReport);
     router.post('/get-all-reports', getAllReports);
     router.post('/change-report', changeReport);
     router.post('/delete-report', deleteReport);

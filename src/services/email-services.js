@@ -1,6 +1,5 @@
 const nodemailer = require("nodemailer");
 
-// Hàm gửi email
 export default async function sendEmail(email, name, url) {
     try {
         // Khởi tạo transporter
@@ -28,10 +27,8 @@ export default async function sendEmail(email, name, url) {
         });
 
         console.log("Message sent: %s", info.messageId);
-        // Thông báo gửi thành công
         console.log("Email sent successfully!");
     } catch (error) {
-        // Bắt lỗi nếu có
         console.error("Error sending email:", error);
     }
 }

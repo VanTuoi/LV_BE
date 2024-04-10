@@ -1,17 +1,13 @@
 
 // In the Project
-import db from "../models/index";
+import jwt from 'jsonwebtoken';
 import auth from '../middleware/authentication'
+import sendEmail from '../services/email-services'
+import userServices from '../services/user-services'
 import createResponse from '../helpers/responseHelper';
 import authenticationServices from '../services/authentication-services'
-import userController from './user-controller'
-import managerController from './manager-controller'
-import userServices from '../services/user-services'
-import storeServices from '../services/store-services'
-import sendEmail from '../services/email-services'
-import jwt from 'jsonwebtoken';
 
-// User
+//---------------------------------------------------------------- User-----------------------------------------------//
 const registerUser = async (req, res) => {
     const { U_Name: name, U_Email: email, U_PhoneNumber: phone, U_Password: password } = req.body;
 
@@ -145,7 +141,7 @@ const changePasswordUser = async (req, res) => {
 
 }
 
-// Manager
+//---------------------------------------------------------------- Manager-----------------------------------------------//
 const registerManager = async (req, res) => {
     const { M_Name: name, M_Email: email, M_PhoneNumber: phone, M_Password: password } = req.body;
 
@@ -232,18 +228,18 @@ const changePasswordManager = async (req, res) => {
 
 }
 
-
 const logOut = async (req, res) => {
     res.clearCookie('Jwt');
     return res.status(200).json(createResponse(0, 'Đăng xuất thành công'));
 }
 
 module.exports = {
+    //User
     registerUser,
     loginUser,
     forgotPasswordUser,
     changePasswordUser,
-
+    //Manger
     registerManager,
     loginManager,
 

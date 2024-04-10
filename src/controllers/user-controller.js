@@ -1,8 +1,8 @@
+
 import userServices from '../services/user-services'
 import authenticationServices from '../services/authentication-services'
 import createResponse from '../helpers/responseHelper';
 import storeServices from '../services/store-services'
-import { DATE } from 'sequelize';
 
 // --------------------------------------------Account----------------------------------------------------//
 
@@ -193,37 +193,6 @@ const getAllReserveTickets = async (req, res) => {
     }
 }
 
-const createReserveTicketHaveAccount = async (req, res) => {
-    try {
-        const { RT_DateTimeArrival: bookingDate, U_Id: userID, CS_Id: storeID, RT_NumberOfParticipants: numberOfParticipants } = req.body;
-
-        // console.log(userID, bookingDate, storeID);
-
-        if (!bookingDate || !storeID || !numberOfParticipants || !userID) {
-            return res.status(201).json(createResponse(-1, 'Dữ liệu phiếu đặt bàn không đủ', null));
-        }
-
-        const isValidBookingTime = await userServices.checkBookingConditionHaveAccount(bookingDate, +userID, +storeID);
-
-        if (isValidBookingTime) {
-            const newRecord = await userServices.createReserveTicket(bookingDate, numberOfParticipants, null, userID, storeID);
-            if (newRecord) {
-                const ID_lastBokking = await userServices.findLastReserveTicketId(userID, storeID);
-                userServices.createStatusReserveTicket(ID_lastBokking, 'Waiting');
-                const qr = await userServices.createQrCode({ RT_Id: ID_lastBokking });
-                return res.status(200).json(createResponse(0, 'Bạn đã đặt bàn thành công', qr));
-            } else {
-                return res.status(200).json(createResponse(-1, 'Đặt bàn không thành công', null));
-            }
-        } else {
-            return res.status(200).json(createResponse(-1, 'Bạn đã đặt 1 bàn đã đặt gần thời gian đó', null));
-        }
-    } catch (error) {
-        console.error('Lỗi tạo vé đặt bàn', error);
-        return res.status(500).json(createResponse(-5, 'Lỗi tạo vé đặt bàn', null));
-    }
-};
-
 const checkStatusAllReserveTicketOfUser = async (req, res) => {     // Kiểm tra trạng thái các vé đặt bàn
 
     const { U_Id: userID, } = req.body;
@@ -273,6 +242,37 @@ const checkStatusAllReserveTicketOfUser = async (req, res) => {     // Kiểm tr
     }
 };
 
+const createReserveTicketHaveAccount = async (req, res) => {
+    try {
+        const { RT_DateTimeArrival: bookingDate, U_Id: userID, CS_Id: storeID, RT_NumberOfParticipants: numberOfParticipants } = req.body;
+
+        // console.log(userID, bookingDate, storeID);
+
+        if (!bookingDate || !storeID || !numberOfParticipants || !userID) {
+            return res.status(201).json(createResponse(-1, 'Dữ liệu phiếu đặt bàn không đủ', null));
+        }
+
+        const isValidBookingTime = await userServices.checkBookingConditionHaveAccount(bookingDate, +userID, +storeID);
+
+        if (isValidBookingTime) {
+            const newRecord = await userServices.createReserveTicket(bookingDate, numberOfParticipants, null, userID, storeID);
+            if (newRecord) {
+                const ID_lastBokking = await userServices.findLastReserveTicketId(userID, storeID);
+                userServices.createStatusReserveTicket(ID_lastBokking, 'Waiting');
+                const qr = await userServices.createQrCode({ RT_Id: ID_lastBokking });
+                return res.status(200).json(createResponse(0, 'Bạn đã đặt bàn thành công', qr));
+            } else {
+                return res.status(200).json(createResponse(-1, 'Đặt bàn không thành công', null));
+            }
+        } else {
+            return res.status(200).json(createResponse(-1, 'Bạn đã đặt 1 bàn đã đặt gần thời gian đó', null));
+        }
+    } catch (error) {
+        console.error('Lỗi tạo vé đặt bàn', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi tạo vé đặt bàn', null));
+    }
+};
+
 //------------------------------------------ Store-------------------------------------------------------//
 const statusFavouriteStore = async (req, res) => {
     try {
@@ -282,7 +282,7 @@ const statusFavouriteStore = async (req, res) => {
             return res.status(201).json(createResponse(-1, 'Dữ liệu tìm trạng thái lưu cửa hàng từ người dùng không đủ', null));
         }
 
-        let isSave = await userServices.findStatusSaveStore(id, CS_Id)
+        let isSave = await userServices.findStatusFavoritesStore(id, CS_Id)
 
         if (isSave) {
             return res.status(200).json(createResponse(0, 'Đây là cửa hàng yêu thích của bạn'));
@@ -304,7 +304,7 @@ const statusFavouriteAllStores = async (req, res) => {
             return res.status(201).json(createResponse(-1, 'Dữ liệu tìm trạng thái lưu tất cả cửa hàng yêu thích từ người dùng không đủ', null));
         }
 
-        let isHave = await userServices.findStatusSaveAllStore(id)
+        let isHave = await userServices.findStatusFavoritesAllStores(id)
 
         if (isHave) {
             return res.status(200).json(createResponse(0, 'Tìm thấy danh sách lưu cửa hàng yêu thích', isHave));
@@ -318,75 +318,6 @@ const statusFavouriteAllStores = async (req, res) => {
     }
 }
 
-const createFavouriteStore = async (req, res) => {
-    try {
-        const { U_Id: id, CS_Id: CS_Id } = req.body;
-
-        if (!id || !CS_Id) {
-            return res.status(201).json(createResponse(-1, 'Dữ liệu lưu cửa hàng từ người dùng không đủ', null));
-        }
-        let isSave = await userServices.findStatusSaveStore(id, CS_Id)
-
-        if (isSave) {
-            return res.status(200).json(createResponse(-1, 'Bạn đã lưu cửa hàng yêu thích', null));
-        }
-
-        let createFavouriteStore = await userServices.createSaveStore(id, CS_Id)
-
-        if (createFavouriteStore) {
-            return res.status(200).json(createResponse(0, 'Lưu cửa hàng yêu thích thành công'));
-        } else {
-            return res.status(200).json(createResponse(1, 'Lưu cửa hàng yêu thích thất bại', null));
-        }
-
-    } catch (error) {
-        console.error('Lỗi lưu cửa hàng yêu thích', error);
-        return res.status(500).json(createResponse(-5, 'Lỗi lưu cửa hàng yêu thích', null));
-    }
-}
-
-const deleteFavouriteStore = async (req, res) => {
-    try {
-        const { U_Id: id, CS_Id: CS_Id } = req.body;
-
-        if (!id || !CS_Id) {
-            return res.status(201).json(createResponse(-1, 'Dữ liệu xóa Xóa cửa hàng yêu thích từ người dùng không đủ', null));
-        }
-
-        let isDeleteStore = await userServices.deleteSaveStore(id, CS_Id)
-
-        if (isDeleteStore) {
-            return res.status(200).json(createResponse(0, 'Xóa cửa hàng yêu thích thành công'));
-        } else {
-            return res.status(200).json(createResponse(1, 'Xóa cửa hàng yêu thích thất bại', null));
-        }
-
-    } catch (error) {
-        console.error('Lỗi xóa cửa hàng yêu thích', error);
-        return res.status(500).json(createResponse(-5, 'Lỗi xóa cửa hàng yêu thích', null));
-    }
-}
-
-const createComment = async (req, res) => {
-    try {
-        const { U_Id: id, CS_Id: CS_Id, C_Details: C_Details, C_StarsNumber: C_StarsNumber } = req.body;
-        if (!id || !CS_Id || !C_StarsNumber) {
-            return res.status(201).json(createResponse(-1, 'Dữ liệu bình luận không đủ', null));
-        }
-
-        let status = await storeServices.createComment(id, CS_Id, C_Details, C_StarsNumber)
-
-        if (status) {
-            return res.status(200).json(createResponse(0, 'Tạo bình luận thành công'));
-        }
-        return res.status(200).json(createResponse(1, 'Tạo bình luận thất bại', null));
-
-    } catch (error) {
-        console.error('Lỗi tạo bình luận', error);
-        return res.status(500).json(createResponse(-5, 'Lỗi tạo bình luận', null));
-    }
-}
-
 const getComment = async (req, res) => {
     try {
         const { U_Id: id, CS_Id: CS_Id, } = req.body;
@@ -394,7 +325,7 @@ const getComment = async (req, res) => {
             return res.status(201).json(createResponse(-1, 'Dữ liệu tìm bình luận không đủ', null));
         }
 
-        let isHave = await storeServices.findComment(id, CS_Id)
+        let isHave = await storeServices.findCommentOfCoffeeStoreByIdUser(id, CS_Id)
 
         if (isHave) {
             return res.status(200).json(createResponse(0, 'Tìm thấy bình luận của người dùng', isHave));
@@ -404,66 +335,6 @@ const getComment = async (req, res) => {
     } catch (error) {
         console.error('Lỗi tìm bình luận của người dùng', error);
         return res.status(500).json(createResponse(-5, 'Lỗi tìm bình luận của người dùng', null));
-    }
-}
-
-const changeComment = async (req, res) => {
-    try {
-        const { U_Id: id, CS_Id: CS_Id, C_Details: C_Details, C_StarsNumber: C_StarsNumber } = req.body;
-        if (!id || !CS_Id || !C_StarsNumber) {
-            return res.status(201).json(createResponse(-1, 'Dữ liệu thay đổi bình luận không đủ', null));
-        }
-
-        let status = await storeServices.updateComment(id, CS_Id, C_Details, C_StarsNumber)
-
-        if (status) {
-            return res.status(200).json(createResponse(0, 'Thay đổi bình luận thành công'));
-        }
-        return res.status(200).json(createResponse(1, 'Thay đổi bình luận thất bại', null));
-
-    } catch (error) {
-        console.error('Lỗi thay đổi bình luận', error);
-        return res.status(500).json(createResponse(-5, 'Lỗi thay đổi bình luận', null));
-    }
-}
-
-const deleteComment = async (req, res) => {
-    try {
-        const { U_Id: id, CS_Id: CS_Id } = req.body;
-        if (!id || !CS_Id) {
-            return res.status(201).json(createResponse(-1, 'Dữ liệu xóa bình luận không đủ', null));
-        }
-
-        let status = await storeServices.deleteComment(id, CS_Id)
-
-        if (status) {
-            return res.status(200).json(createResponse(0, 'Xóa bình luận thành công'));
-        }
-        return res.status(200).json(createResponse(1, 'Xóa bình luận thất bại', null));
-
-    } catch (error) {
-        console.error('Lỗi xóa bình luận', error);
-        return res.status(500).json(createResponse(-5, 'Lỗi xóa bình luận', null))
-    }
-}
-
-const createReport = async (req, res) => {
-    try {
-        const { U_Id: id, CS_Id: CS_Id, R_Details: R_Details } = req.body;
-        if (!id || !CS_Id || !R_Details) {
-            return res.status(201).json(createResponse(-1, 'Dữ liệu báo cáo không đủ', null));
-        }
-
-        let status = await userServices.createReport(id, CS_Id, R_Details)
-
-        if (status) {
-            return res.status(200).json(createResponse(0, 'Tạo báo cáo thành công'));
-        }
-        return res.status(200).json(createResponse(1, 'Tạo báo cáo thất bại', null));
-
-    } catch (error) {
-        console.error('Lỗi tạo báo cáo', error);
-        return res.status(500).json(createResponse(-5, 'Lỗi tạo báo cáo', null));
     }
 }
 
@@ -507,6 +378,93 @@ const getAllReports = async (req, res) => {
     }
 }
 
+const createFavouriteStore = async (req, res) => {
+    try {
+        const { U_Id: id, CS_Id: CS_Id } = req.body;
+
+        if (!id || !CS_Id) {
+            return res.status(201).json(createResponse(-1, 'Dữ liệu lưu cửa hàng từ người dùng không đủ', null));
+        }
+        let isSave = await userServices.findStatusFavoritesStore(id, CS_Id)
+
+        if (isSave) {
+            return res.status(200).json(createResponse(-1, 'Bạn đã lưu cửa hàng yêu thích', null));
+        }
+
+        let createFavouriteStore = await userServices.createFavoritesStore(id, CS_Id)
+
+        if (createFavouriteStore) {
+            return res.status(200).json(createResponse(0, 'Lưu cửa hàng yêu thích thành công'));
+        } else {
+            return res.status(200).json(createResponse(1, 'Lưu cửa hàng yêu thích thất bại', null));
+        }
+
+    } catch (error) {
+        console.error('Lỗi lưu cửa hàng yêu thích', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi lưu cửa hàng yêu thích', null));
+    }
+}
+
+const createCommentOfUser = async (req, res) => {
+    try {
+        const { U_Id: id, CS_Id: CS_Id, C_Details: C_Details, C_StarsNumber: C_StarsNumber } = req.body;
+        if (!id || !CS_Id || !C_StarsNumber) {
+            return res.status(201).json(createResponse(-1, 'Dữ liệu bình luận không đủ', null));
+        }
+
+        let status = await storeServices.createCommentOfUser(id, CS_Id, C_Details, C_StarsNumber)
+
+        if (status) {
+            return res.status(200).json(createResponse(0, 'Tạo bình luận thành công'));
+        }
+        return res.status(200).json(createResponse(1, 'Tạo bình luận thất bại', null));
+
+    } catch (error) {
+        console.error('Lỗi tạo bình luận', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi tạo bình luận', null));
+    }
+}
+
+const createReport = async (req, res) => {
+    try {
+        const { U_Id: id, CS_Id: CS_Id, R_Details: R_Details } = req.body;
+        if (!id || !CS_Id || !R_Details) {
+            return res.status(201).json(createResponse(-1, 'Dữ liệu báo cáo không đủ', null));
+        }
+
+        let status = await userServices.createReport(id, CS_Id, R_Details)
+
+        if (status) {
+            return res.status(200).json(createResponse(0, 'Tạo báo cáo thành công'));
+        }
+        return res.status(200).json(createResponse(1, 'Tạo báo cáo thất bại', null));
+
+    } catch (error) {
+        console.error('Lỗi tạo báo cáo', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi tạo báo cáo', null));
+    }
+}
+
+const changeComment = async (req, res) => {
+    try {
+        const { U_Id: id, CS_Id: CS_Id, C_Details: C_Details, C_StarsNumber: C_StarsNumber } = req.body;
+        if (!id || !CS_Id || !C_StarsNumber) {
+            return res.status(201).json(createResponse(-1, 'Dữ liệu thay đổi bình luận không đủ', null));
+        }
+
+        let status = await storeServices.updateCommentOfUser(id, CS_Id, C_Details, C_StarsNumber)
+
+        if (status) {
+            return res.status(200).json(createResponse(0, 'Thay đổi bình luận thành công'));
+        }
+        return res.status(200).json(createResponse(1, 'Thay đổi bình luận thất bại', null));
+
+    } catch (error) {
+        console.error('Lỗi thay đổi bình luận', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi thay đổi bình luận', null));
+    }
+}
+
 const changeReport = async (req, res) => {
     try {
         const { R_Id: R_Id, R_Details: R_Detail } = req.body;
@@ -525,6 +483,48 @@ const changeReport = async (req, res) => {
     } catch (error) {
         console.error('Lỗi thay đổi báo cáo', error);
         return res.status(500).json(createResponse(-5, 'Lỗi thay đổi báo cáo', null));
+    }
+}
+
+const deleteCommentOfUser = async (req, res) => {
+    try {
+        const { U_Id: id, CS_Id: CS_Id } = req.body;
+        if (!id || !CS_Id) {
+            return res.status(201).json(createResponse(-1, 'Dữ liệu xóa bình luận không đủ', null));
+        }
+
+        let status = await storeServices.deleteCommentOfUser(id, CS_Id)
+
+        if (status) {
+            return res.status(200).json(createResponse(0, 'Xóa bình luận thành công'));
+        }
+        return res.status(200).json(createResponse(1, 'Xóa bình luận thất bại', null));
+
+    } catch (error) {
+        console.error('Lỗi xóa bình luận', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi xóa bình luận', null))
+    }
+}
+
+const deleteFavouriteStore = async (req, res) => {
+    try {
+        const { U_Id: id, CS_Id: CS_Id } = req.body;
+
+        if (!id || !CS_Id) {
+            return res.status(201).json(createResponse(-1, 'Dữ liệu xóa Xóa cửa hàng yêu thích từ người dùng không đủ', null));
+        }
+
+        let isDeleteStore = await userServices.deleteFavoritesStore(id, CS_Id)
+
+        if (isDeleteStore) {
+            return res.status(200).json(createResponse(0, 'Xóa cửa hàng yêu thích thành công'));
+        } else {
+            return res.status(200).json(createResponse(1, 'Xóa cửa hàng yêu thích thất bại', null));
+        }
+
+    } catch (error) {
+        console.error('Lỗi xóa cửa hàng yêu thích', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi xóa cửa hàng yêu thích', null));
     }
 }
 
@@ -556,25 +556,25 @@ module.exports = {
     getAvatar,
     getExp,
     changeAvatar,
+
     // Store
+    statusFavouriteStore,
+    statusFavouriteAllStores,
     checkTimeBooking,
+    checkStatusAllReserveTicketOfUser,
+    getComment,
+    getReport,
+    getAllReports,
     getReserveTicketsToday,
     getAllReserveTickets,
     createReserveTicketHaveAccount,
-    checkStatusAllReserveTicketOfUser,
-
-    statusFavouriteStore,
-    createFavouriteStore,
-    statusFavouriteAllStores,
-    deleteFavouriteStore,
-    createComment,
-    getComment,
-    changeComment,
-    deleteComment,
-
     createReport,
-    getReport,
-    getAllReports,
+    createFavouriteStore,
+    createCommentOfUser,
     changeReport,
+    changeComment,
     deleteReport,
+    deleteCommentOfUser,
+    deleteFavouriteStore,
+
 }

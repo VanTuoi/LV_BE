@@ -4,12 +4,12 @@ import db from "../models/index";
 const bcrypt = require('bcrypt');
 
 let salt = bcrypt.genSaltSync(10);
-//-----------------------------------------Password--------------------------
+//---------------------------------------------Password------------------------------------------------------//
 const handlehashPassword = async (password) => {
     let hashPassword = bcrypt.hashSync(password, salt)
     return hashPassword;
 }
-// -------------------------------------------------------------Account------------------------------------------------------//
+// --------------------------------------------Account------------------------------------------------------//
 const findManagerById = async (id) => {
     try {
         const manager = await db.Manager.findByPk(id)
@@ -34,7 +34,7 @@ const updateInforManager = async (id, name, phone, email, gender, birthday) => {
         manager.M_Gender = gender;
         manager.M_Birthday = birthday;
 
-        await manager.save(); // Save the changes to the database
+        await manager.save();
         return manager;
     } catch (error) {
         console.error('Error updating manager:', error);
@@ -43,8 +43,8 @@ const updateInforManager = async (id, name, phone, email, gender, birthday) => {
 };
 
 const changePassworManager = async (id, newPassword) => {
-    try {
 
+    try {
         let passwordHash = await handlehashPassword(newPassword)
 
         const manager = await db.Manager.findByPk(id);
@@ -55,7 +55,7 @@ const changePassworManager = async (id, newPassword) => {
         }
         manager.M_Password = passwordHash;
 
-        await manager.save(); // Save the changes to the database
+        await manager.save();
         return manager;
     } catch (error) {
         console.error('Error updating passwrod manager:', error);

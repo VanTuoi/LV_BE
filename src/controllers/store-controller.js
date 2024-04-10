@@ -3,11 +3,11 @@ import createResponse from '../helpers/responseHelper';
 import userServices from '../services/user-services'
 import imageServices from '../services/image-services'
 
-//--------------------------------------------- Tìm kiếm, lấy thông tin chung----------------------------------------------//
-const getTopCoffeeStores = async (req, res) => {
+//--------------------------------------------- Find----------------------------------------------//
+const getTopCoffeeStores = async (req, res) => {                // Lấy top 4 cửa hàng
     try {
 
-        let newRecord = await storeServices.findTopCoffee()
+        let newRecord = await storeServices.findTopCoffeeStore()
 
         if (newRecord) {
             return res.status(200).json(createResponse(0, 'Tìm thấy top', newRecord));
@@ -50,13 +50,14 @@ const getCoffeeStoresByName = async (req, res) => {           //  Tìm kiếm c�
     const time = req.query.time;
     const people = req.query.people;
 
-    console.log(name, time, people);
+    // console.log(name, time, '|', people);
 
     try {
         if (!name) {
             return res.status(200).json(createResponse(-1, 'Vui lòng nhập tên cửa hàng cần tìm'));
         }
-        let newRecord = await storeServices.findAllCoffeeStoreByName(name, time, people)
+        let newRecord = await storeServices.findAllCoffeeStoreByName(name, time, people ? people : 1)
+
         if (newRecord) {
             return res.status(200).json(createResponse(0, 'Tìm thấy cửa hàng danh sách cửa hàng', newRecord));
         } else {
@@ -152,7 +153,7 @@ const getHolidaysCoffeeStore = async (req, res) => {              // Lấy danh 
         if (!month || !id) {
             return res.status(200).json(createResponse(1, 'Thiếu dữ liệu', listHoliday));
         }
-        const listHoliday = await storeServices.findAllHolidayToMonth(id, month);
+        const listHoliday = await storeServices.findAllHolidaysOfCoffeeStoreToMonth(id, month);
 
         if (listHoliday) {
             // console.log('listHoliday', month, id, listHoliday);
@@ -257,7 +258,7 @@ const getTagsCoffeeStoreById = async (req, res) => {            //
 
 }
 
-//--------------------------------------------------  Với khách vãng lai
+//-------------------------------------------------Với khách vãng lai------------------------------//
 
 const checkTimeBooking = async (req, res) => {
     try {
@@ -339,7 +340,6 @@ module.exports = {
     getRatingCoffeeStore,
     getBannerCofeeStore,
     getAvatarCoffeeStore,
-
 
     checkTimeBooking,
     createReserveTicketNoAccount,

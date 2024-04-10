@@ -7,17 +7,15 @@ const imageKit = new ImageKit({
     urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT
 });
 
-const uploadImage = async (base64Image, content) => {
-    const fileName = `${content}${Date.now()}`; // Tạo tên file dựa trên M_Id và CS_Id
-
+const getImageUrl = async (content) => {
     try {
-        const result = await imageKit.upload({
-            file: base64Image, // base64 encoded image
-            fileName: fileName
+        const result = await imageKit.listFiles({
+            searchQuery: `name:"${content}"`,
+            limit: 1
         });
-        return result.url; // Trả về URL của ảnh
+        return result.length > 0 ? result[0].url : null;
     } catch (error) {
-        console.error('Error uploading image:', error);
+        console.error('Error fetching image:', error);
         return null;
     }
 };
@@ -34,15 +32,17 @@ const getImageUrls = async (content) => {
     }
 };
 
-const getImageUrl = async (content) => {
+const uploadImage = async (base64Image, content) => {
+    const fileName = `${content}${Date.now()}`; // Tạo tên file dựa trên M_Id và CS_Id
+
     try {
-        const result = await imageKit.listFiles({
-            searchQuery: `name:"${content}"`,
-            limit: 1
+        const result = await imageKit.upload({
+            file: base64Image, // base64 encoded image
+            fileName: fileName
         });
-        return result.length > 0 ? result[0].url : null;
+        return result.url; // Trả về URL của ảnh
     } catch (error) {
-        console.error('Error fetching image:', error);
+        console.error('Error uploading image:', error);
         return null;
     }
 };
@@ -58,9 +58,9 @@ const deleteImage = async (imageNameOrUrl) => {
 
         if (files.length > 0) {
             const result = await imageKit.deleteFile(files[0].fileId);
-            return result; // Trả về kết quả xóa file
+            return result;
         }
-        return null; // Không tìm thấy file để xóa
+        return null;
     } catch (error) {
         console.error('Error deleting image:', error);
         return null;
@@ -68,8 +68,8 @@ const deleteImage = async (imageNameOrUrl) => {
 };
 
 module.exports = {
-    uploadImage,
+    getImageUrl,
     getImageUrls,
+    uploadImage,
     deleteImage,
-    getImageUrl
 };
