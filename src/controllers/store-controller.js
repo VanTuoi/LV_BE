@@ -4,10 +4,81 @@ import userServices from '../services/user-services'
 import imageServices from '../services/image-services'
 
 //--------------------------------------------- Find----------------------------------------------//
+const getNearCoffeeStore = async (req, res) => {                // Lấy random cửa hàng
+
+    const { lat, lng } = req.body;
+    // console.log('location', req.body.lat);
+    try {
+        if (!lat || !lng) {
+            return res.status(200).json(createResponse(-1, 'Vui lòng nhập vị trí của bạn'));
+        }
+        let newRecord = await storeServices.findNearCoffeeStore(lat, lng, 0.1)
+        if (newRecord) {
+            return res.status(200).json(createResponse(0, 'Tìm thấy cửa hàng lân cận', newRecord));
+        } else {
+            return res.status(200).json(createResponse(1, 'Không Tìm thấy cửa hàng lân cận'));
+        }
+    } catch (error) {
+        console.log('Lỗi Tìm thấy cửa hàng lân cận', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi Tìm thấy cửa hàng lân cận'));
+    }
+}
+
+
+const getMaps = async (req, res) => {                // Lấy random cửa hàng
+
+    const { id: id } = req.body;
+    // console.log('req.params', id);
+    try {
+        if (!id) {
+            return res.status(200).json(createResponse(-1, 'Vui lòng nhập ID cửa hàng'));
+        }
+        let newRecord = await storeServices.findMapsCoffeeStore(id)
+        if (newRecord) {
+            return res.status(200).json(createResponse(0, 'Tìm thấy vị trí cửa hàng', newRecord));
+        } else {
+            return res.status(200).json(createResponse(1, 'Không tìm thấy vị trí cửa hàng'));
+        }
+    } catch (error) {
+        console.log('Lỗi tìm vị trí  cửa hàng theo id', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi tìm vị trí cửa hàng theo id'));
+    }
+}
+
+const getRandomCoffeeStores = async (req, res) => {                // Lấy random cửa hàng
+    try {
+        let newRecord = await storeServices.findRandomCoffeeStores(4)
+
+        if (newRecord) {
+            return res.status(200).json(createResponse(0, 'Tìm thấy random ca hang', newRecord));
+        } else {
+            return res.status(200).json(createResponse(1, 'Không tìm thấy random của hàng'));
+        }
+    } catch (error) {
+        console.log('Lỗi tìm cửa hàng ', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi tìm cửa hàng '));
+    }
+}
+
+const getAllCoffeeStores = async (req, res) => {                // Lấy random cửa hàng
+    try {
+        let newRecord = await storeServices.findAllCoffeeStoreNormal()
+
+        if (newRecord) {
+            return res.status(200).json(createResponse(0, 'Tìm thấy tất cả ca hang', newRecord));
+        } else {
+            return res.status(200).json(createResponse(1, 'Không tìm thấy tất cả của hàng'));
+        }
+    } catch (error) {
+        console.log('Lỗi tìm tất cả cửa hàng ', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi tìm tất cả cửa hàng '));
+    }
+}
+
 const getTopCoffeeStores = async (req, res) => {                // Lấy top 4 cửa hàng
     try {
 
-        let newRecord = await storeServices.findTopCoffeeStore()
+        let newRecord = await storeServices.findTopCoffeeStore(4)
 
         if (newRecord) {
             return res.status(200).json(createResponse(0, 'Tìm thấy top', newRecord));
@@ -254,10 +325,6 @@ const getBannerCofeeStore = async (req, res) => {               // Lấy danh s�
     }
 }
 
-const getTagsCoffeeStoreById = async (req, res) => {            // 
-
-}
-
 //-------------------------------------------------Với khách vãng lai------------------------------//
 
 const checkTimeBooking = async (req, res) => {
@@ -327,6 +394,10 @@ const createReserveTicketNoAccount = async (req, res) => {      // Tạo vé đ�
 
 
 module.exports = {
+    getAllCoffeeStores,
+    getNearCoffeeStore,
+    getMaps,
+    getRandomCoffeeStores,
     getTopCoffeeStores,
     getStatusCoffeeStoreById,
     getCoffeeStoresByName,
@@ -334,7 +405,6 @@ module.exports = {
     getDetailCoffeeStoreById,
     getMenusCoffeeStoreById,
     getServicesCoffeeStoreById,
-    getTagsCoffeeStoreById,
     getHolidaysCoffeeStore,
     getCommentCoffeeStore,
     getRatingCoffeeStore,

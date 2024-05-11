@@ -15,7 +15,7 @@ let initWebRoutes = (app) => {
     app.use('/api/v1/admin', initAdminRoutes());
 
     app.all('/*', (req, res) => {
-        return res.status(200).json(createResponse(-1, 'Không tìm thấy url'));
+        return res.status(404).json(createResponse(-1, 'Không tìm thấy url'));
     });
 }
 

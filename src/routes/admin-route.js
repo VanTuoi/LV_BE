@@ -16,6 +16,8 @@ import {
     lockStore,
     unlockStore,
     deleteStore,
+    overViewBooking,
+    overViewBookingWithDay,
 
     getAllReports,
     changeStatusReport,
@@ -41,6 +43,8 @@ function initAdminRoutes() {
     router.post('/lock-store', lockStore);
     router.post('/un-lock-store', unlockStore);
     router.post('/delete-store', deleteStore);
+    router.post('/get-over-view-booking-by-day', overViewBookingWithDay);
+    router.post('/get-over-view-booking-by-month', overViewBooking);
 
     router.post('/get-all-reports', getAllReports);
     router.post('/change-status-report', changeStatusReport);

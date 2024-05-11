@@ -18,6 +18,10 @@ const registerUser = async (req, res) => {
 
         const isPhoneExist = await authenticationServices.findPhoneUser(phone);
 
+        const isEmailExist = await authenticationServices.findUserByEmail(email);
+
+        if (isEmailExist) return res.status(200).json(createResponse(3, 'Email đã được đăng kí'));
+
         if (isPhoneExist) {
             return res.status(200).json(createResponse(2, 'Số điện thoại đã được đăng kí'));
         } else {
@@ -84,6 +88,70 @@ const loginUser = async (req, res) => {
     }
 };
 
+const loginUserWithGoogle = async (req, res) => {
+    const { data } = req.body;
+
+    try {
+        if (!data) {
+            return res.status(200).json(createResponse(-1, 'Vui lòng nhập đủ thông tin'));
+        }
+
+        const user = await authenticationServices.findUserByEmail(data.email);
+
+        if (!user) {
+            // console.log('run login  create');
+            // return res.status(200).json(createResponse(1, 'not find user'));
+            const record = await authenticationServices.createUserWithGoogle(data.name, data.image, data.email);
+
+            if (!record) {
+                return res.status(200).json(createResponse(1, 'Tạo tài khoản thất bại'));
+            }
+
+            let user = await authenticationServices.findUserByEmail(data.sub);
+            await authenticationServices.createStatusUser(user.U_Id, 'Normal')
+
+            const jwtToken = await auth.createJWTDefault(user.U_Id);
+            res.cookie("Jwt", jwtToken, { maxAge: 2 * 60 * 60 * 1000 })     // 2h
+
+            return res.status(200).json(createResponse(0, 'Đăng nhập thành công', user));
+
+            // return res.status(200).json(createResponse(0, 'Tạo tài khoản và đăng nhập thành công'));
+
+
+        } else {
+            // console.log('run login no create');
+            const jwtToken = await auth.createJWTDefault(user.U_Id);
+            res.cookie("Jwt", jwtToken, { maxAge: 2 * 60 * 60 * 1000 })     // 2h
+            // return res.status(200).json(createResponse(0, user));
+            return res.status(200).json(createResponse(0, 'Đăng nhập thành công', user));
+
+        }
+
+        let fullUser = await authenticationServices.findUserByPhone(phone)
+        let statusAccount = await authenticationServices.findLatestStatusByUserId(fullUser.U_Id)
+
+        if (statusAccount === 'Lock') {
+            return res.status(200).json(createResponse(4, 'Tài khoản của bạn đang bị khóa'));
+        }
+        // console.log('account', account);
+
+        const isPasswordCorrect = await authenticationServices.comparePassword(password, account.U_Password);
+
+        if (!isPasswordCorrect) {
+            return res.status(200).json(createResponse(2, 'Mật khẩu không chính xác'));
+        }
+        account = await authenticationServices.findUserByPhone(phone)
+        const jwtToken = await auth.createJWTDefault(account.U_Id);
+        res.cookie("Jwt", jwtToken, { maxAge: 2 * 60 * 60 * 1000 })     // 2h
+
+        return res.status(200).json(createResponse(0, 'Đăng nhập thành công', account));
+
+    } catch (error) {
+        console.error('Lỗi khi đăng nhập tài khoản người dùng', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi khi đăng nhập tài khoản người dùng'));
+    }
+};
+
 const forgotPasswordUser = async (req, res) => {
 
     const { U_Email: email } = req.body;
@@ -107,7 +175,7 @@ const forgotPasswordUser = async (req, res) => {
             }
             const jwtToken = await auth.createJWTChangePassword(fullUser.U_Id);
             // sendEmail(`${account.U_Email}`, `${account.U_Name}`, `http://localhost:3000/authentication/change-password?Jwt=${jwtToken}`);
-            return res.status(200).json(createResponse(0, 'Tạo url đổi mật khẩu thành công', `http://localhost:3000/authentication/change-password?Jwt=${jwtToken}`));
+            return res.status(200).json(createResponse(0, 'Tạo url đổi mật khẩu thành công', `http://localhost:3000/authentication/change-password-no-login?Jwt=${jwtToken}`));
         }
 
     } catch (error) {
@@ -237,6 +305,7 @@ module.exports = {
     //User
     registerUser,
     loginUser,
+    loginUserWithGoogle,
     forgotPasswordUser,
     changePasswordUser,
     //Manger

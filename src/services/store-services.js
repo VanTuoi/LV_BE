@@ -26,6 +26,71 @@ const checkBookingConditionNoAccount = async (bookingTime, ip, storeId) => {
 };
 
 //------------------------------------------------Of Manager----------------------------------------//
+const updateMapsCoffeeStore = async (location, id) => {
+    try {
+        const coffeeStore = await db.Coffee_Store.findByPk(id);
+
+        if (!coffeeStore) {
+            throw new Error(`Coffee store with ID ${id} not found.`);
+        }
+
+        coffeeStore.CS_Maps = location;
+        await coffeeStore.save();
+
+        return coffeeStore;
+    } catch (error) {
+        console.error('Error updating the coffee store record:', error);
+        throw error;
+    }
+};
+
+const findMapsCoffeeStore = async (id) => {
+    try {
+        const coffeeStore = await db.Coffee_Store.findByPk(id);
+
+        if (!coffeeStore) {
+            throw new Error(`Coffee store with ID ${id} not found.`);
+        }
+
+        return coffeeStore.CS_Maps;
+    } catch (error) {
+        console.error('Error updating the coffee store record:', error);
+        throw error;
+    }
+};
+
+const findNearCoffeeStore = async (lat, lng, maxDistance) => {
+    try {
+        const coffeeStores = await db.Coffee_Store.findAll({
+            attributes: ['CS_Name', 'CS_Id', 'CS_Location', 'CS_Avatar', 'CS_Maps'],
+            raw: true // Get raw data directly
+        });
+
+        // Tạo mảng các cửa hàng cà phê với khoảng cách
+        const storesWithDistance = coffeeStores.map(coffeeStore => {
+            if (!coffeeStore.CS_Maps || coffeeStore.CS_Maps.trim() === '') {
+                return { coffeeStore, distance: Infinity }; // Đặt khoảng cách là vô cực nếu không có dữ liệu vị trí
+            }
+            const { lat: storeLat, lng: storeLng } = JSON.parse(coffeeStore.CS_Maps);
+            const distance = Math.sqrt(Math.pow(lat - storeLat, 2) + Math.pow(lng - storeLng, 2));
+            return { coffeeStore, distance };
+        });
+
+        // Sắp xếp các cửa hàng theo khoảng cách
+        storesWithDistance.sort((a, b) => a.distance - b.distance);
+
+        // Lấy 4 cửa hàng gần nhất
+        const nearStores = storesWithDistance.slice(0, 4).map(entry => entry.coffeeStore);
+
+        return nearStores;
+    } catch (error) {
+        console.error('Error finding near coffee stores:', error);
+        throw error;
+    }
+};
+
+
+
 
 const findOverViewBookingByMonth = async (id, firstDayOfMonth, lastDayOfMonth) => {
     try {
@@ -87,16 +152,12 @@ const findOverViewBookingByMonth = async (id, firstDayOfMonth, lastDayOfMonth) =
             }
         });
 
-        // console.log('statusByDate', statusByDate);
-
         return dateList;
     } catch (error) {
         console.error('Error finding all booking field today by id store', error);
         throw error;
     }
 }
-
-
 
 const findReserveTicketOfCoffeeStoreToDay = async (startDay, endDay, id) => {
     try {
@@ -283,7 +344,7 @@ const findCoffeeStoreByIdManager = async (id) => {
     try {
         const coffeeStore = await db.Coffee_Store.findOne({
             where: { M_Id: id },
-            include: [db.Menus, db.Services, db.Tags]
+            include: [db.Menus, db.Services]
         });
         return coffeeStore || null;
     } catch (error) {
@@ -492,7 +553,69 @@ const deleteHolidayOfCoffeeStore = async (holiday, CS_Id) => {
 //-------------------------------------------------- Store---------------------------------------//
 
 
-const findTopCoffeeStore = async () => {
+const findRandomCoffeeStores = async (n) => {
+    try {
+        const count = await db.Coffee_Store.count();
+        let randomIndices = [];
+        while (randomIndices.length < n) {
+            const randIndex = Math.floor(Math.random() * count);
+            if (!randomIndices.includes(randIndex)) {
+                randomIndices.push(randIndex);
+            }
+        }
+
+        const promises = randomIndices.map(index =>
+            db.Coffee_Store.findOne({
+                attributes: ['CS_Id', 'CS_Name', 'CS_Location', 'CS_Avatar'],
+                offset: index,
+                limit: 1
+            })
+        );
+
+        const randomStores = await Promise.all(promises);
+
+        return randomStores.map(store => ({
+            CS_Id: store.CS_Id,
+            CS_Name: store.CS_Name,
+            CS_Location: store.CS_Location,
+            CS_Avatar: store.CS_Avatar
+        }));
+    } catch (error) {
+        console.error('Error finding random coffee stores', error);
+        return null;
+    }
+};
+
+const findAllCoffeeStoreNormal = async () => {
+    try {
+        const coffeeStores = await db.Coffee_Store.findAll({
+            attributes: [
+                'CS_Id',
+                'CS_Name',
+                'CS_Avatar',
+                'CS_Location',
+                'CS_AcceptOnline',
+                'CS_MaxPeople',
+                'CS_TimeOpen',
+                'CS_TimeClose',
+                [literal('(SELECT SCS_Describe FROM Status_Coffee_Store WHERE Coffee_Store.CS_Id = Status_Coffee_Store.CS_Id ORDER BY createdAt DESC LIMIT 1)'), 'SCS_Describe']
+            ],
+        });
+        const list = [];
+        for (const coffeeStore of coffeeStores) {
+            if (coffeeStore.dataValues.SCS_Describe === 'Normal') {
+                list.push(coffeeStore);
+            }
+        }
+        return list;
+    } catch (error) {
+        console.error('Error updating the coffee store record:', error);
+        throw error;
+    }
+};
+
+
+const findTopCoffeeStore = async (n) => {
     try {
         const topRatedStores = await db.Comments.findAll({
             attributes: ['CS_Id', [db.sequelize.fn('AVG', db.sequelize.col('C_StarsNumber')), 'Avg_Stars']],
@@ -504,7 +627,7 @@ const findTopCoffeeStore = async () => {
             ],
             group: ['CS_Id'],
             order: [[db.sequelize.literal('Avg_Stars'), 'DESC']],
-            limit: 5
+            limit: n
         });
         return topRatedStores.map(store => {
             return {
@@ -653,18 +776,6 @@ const findServicesByCoffeeStoreId = async (id) => {
     }
 };
 
-const findTagsByCoffeeStoreId = async (id) => {
-    try {
-        const tags = await db.Tags.findOne({
-            where: { CS_Id: id },
-        });
-        return tags;
-    } catch (error) {
-        console.error('Error finding tags of coffee store:', error);
-        return null;
-    }
-};
-
 
 const findAllCommentsOfStore = async (CS_Id) => {
     try {
@@ -760,17 +871,22 @@ module.exports = {
     checkBookingConditionNoAccount,
 
     //Of Store
+    findNearCoffeeStore,
     findAllCommentsOfStore,
+    findAllCoffeeStoreNormal,
+    findRandomCoffeeStores,
     findTopCoffeeStore,
     findCoffeeStoreById,
     findAllCoffeeStoreByName,
     findCoffeeStoreDetailById,
     findMenusByCoffeeStoreId,
     findServicesByCoffeeStoreId,
-    findTagsByCoffeeStoreId,
     findAllHolidaysOfCoffeeStoreToMonth,
 
     //Of Manager
+    updateMapsCoffeeStore,
+    findMapsCoffeeStore,
+
     findOverViewBookingByMonth,
     findAllReserveTicketOfCoffeeStoreById,
     findReserveTicketOfCoffeeStoreToMonth,
@@ -792,5 +908,5 @@ module.exports = {
     findCommentOfCoffeeStoreByIdUser,
     createCommentOfUser,
     updateCommentOfUser,
-    deleteCommentOfUser
+    deleteCommentOfUser,
 }

@@ -12,7 +12,7 @@ module.exports = {
       },
       U_Avatar: {
         allowNull: false,
-        type: Sequelize.STRING
+        type: Sequelize.TEXT
       },
       U_Name: {
         allowNull: false,

@@ -22,8 +22,10 @@ import {
     uploadImgaePageDetail,
     deleteImageBanner,
 
+    createLocationMaps,
+    getLocationMaps,
+
     overViewBookingWithDay,
-    overViewBooking,
 } from '../controllers/manager-controller';
 
 
@@ -55,9 +57,11 @@ function initManagerRoutes() {
     router.post('/get-images-banner', getImageBanner);
     router.delete('/delete-images-banner', deleteImageBanner);
 
+    router.patch('/location', createLocationMaps);
+    router.get('/location', getLocationMaps);
+
     // Overview
     router.post('/get-over-view-booking-by-day', overViewBookingWithDay);
-    router.post('/get-over-view-booking-by-month', overViewBooking);
 
 
     return router;

@@ -30,7 +30,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     U_Avatar: {
       type: DataTypes.STRING,
-      allowNull: true
+      allowNull: true,
     },
     U_Name: {
       type: DataTypes.STRING,
@@ -41,14 +41,14 @@ module.exports = (sequelize, DataTypes) => {
     },
     U_Password: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
       validate: {
         len: [8, 200]
       }
     },
     U_PhoneNumber: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
       validate: {
         len: [10, 10]
       }

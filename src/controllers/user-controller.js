@@ -3,7 +3,9 @@ import userServices from '../services/user-services'
 import authenticationServices from '../services/authentication-services'
 import createResponse from '../helpers/responseHelper';
 import storeServices from '../services/store-services'
-
+const stripe = require("stripe")(
+    "sk_test_51PAiwRCKJBQdw7MEGCejcp5p1P2yYf2NtHrN6iNYnToeR3yMSpbntu4tnvF3nigXAmY2XEL5HZwCDiZLwQTJCdwi00sOP5N61h"
+);
 // --------------------------------------------Account----------------------------------------------------//
 
 const getInfor = async (req, res) => {
@@ -214,7 +216,8 @@ const checkStatusAllReserveTicketOfUser = async (req, res) => {     // Kiểm tr
             const timeDifferenceInMinutes = await userServices.checkTimeReserveTicket(reserveTicket.RT_Id);
             const StatusByReserveTicket = await userServices.findLatestStatusByReserveTicketId(reserveTicket.RT_Id);
             const status = StatusByReserveTicket.SRT_Describe
-            const maxTimeDelay = await userServices.getMaxTimeDelay(userID)
+            let maxTimeDelay = 15;
+            maxTimeDelay = await userServices.getMaxTimeDelay(userID)
 
             function getCurrentTimeWithMilliseconds() {
                 const now = new Date();
@@ -227,8 +230,8 @@ const checkStatusAllReserveTicketOfUser = async (req, res) => {     // Kiểm tr
                 return `${formattedDate} ${timeParts[0]}:${timeParts[1]}:${timeParts[2].substring(0, 2)}.${milliseconds} ${timezone}`;
             }
             // console.log(`Kiểm tra vé đặt bàn có Id: ${reserveTicket.RT_Id} có trạng thái là : ${status} vào lúc ${getCurrentTimeWithMilliseconds()}`);
-
-            if (status === 'Waiting' && timeDifferenceInMinutes <= maxTimeDelay) {
+            // console.log('timeDifferenceInMinutes', timeDifferenceInMinutes, maxTimeDelay);
+            if (status === 'Waiting' && (timeDifferenceInMinutes < - maxTimeDelay)) {
                 await userServices.createStatusReserveTicket(reserveTicket.RT_Id, 'Late');
                 await userServices.changeExp(userID, -2)                // Muộn thì -2
                 console.log('Update status ReserveTicket');
@@ -528,6 +531,7 @@ const deleteFavouriteStore = async (req, res) => {
     }
 }
 
+
 const deleteReport = async (req, res) => {
     try {
         const { R_Id: id } = req.body;
@@ -548,6 +552,37 @@ const deleteReport = async (req, res) => {
     }
 }
 
+const payment = async (req, res) => {
+
+    try {
+        const { } = req.body;
+
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ["card"],
+            line_items: [{
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: 'T-shirt',
+                        description: 'Comfortable cotton t-shirt',
+                    },
+                    unit_amount: 100, // Price in cents: $20.00
+                },
+                quantity: 1,
+            }],
+            mode: "payment",
+            success_url: "http://localhost:3000/",
+            cancel_url: "http://localhost:3000/payment",
+        });
+
+        return res.status(200).json(createResponse(0, 'Thanh toán', { id: session.id }));
+    } catch (error) {
+        console.error('Lỗi thanh toán', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi thanh toán', null));
+    }
+}
+
+
 module.exports = {
     // Account
     getInfor,
@@ -558,6 +593,7 @@ module.exports = {
     changeAvatar,
 
     // Store
+
     statusFavouriteStore,
     statusFavouriteAllStores,
     checkTimeBooking,
@@ -576,5 +612,7 @@ module.exports = {
     deleteReport,
     deleteCommentOfUser,
     deleteFavouriteStore,
+
+    payment,
 
 }

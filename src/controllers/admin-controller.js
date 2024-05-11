@@ -1,4 +1,5 @@
 import adminServices from '../services/admin-services'
+import storeServices from '../services/store-services'
 import createResponse from '../helpers/responseHelper';
 
 //--------------------------------------------------- Account--------------------------//
@@ -265,6 +266,69 @@ const deleteStore = async (req, res) => {
 
 }
 
+const overViewBooking = async (req, res) => {
+    const { CS_Id, month, year } = req.body;
+
+    if (!CS_Id || !month || !year) {
+        return res.status(200).json(createResponse(-1, 'Vui lòng nhập đủ thông tin'));
+    }
+
+    try {
+
+        const firstDayOfMonth = new Date(new Date().getFullYear(), month - 1, 2);
+        firstDayOfMonth.setHours(0, 0, 0, 0);
+        const lastDayOfMonth = new Date(new Date().getFullYear(), month, 1);
+        lastDayOfMonth.setHours(23, 59, 59, 999);
+
+        // console.log('firstDayOfMonth - lastDayOfMonth', firstDayOfMonth, lastDayOfMonth);
+
+        const result = await storeServices.findOverViewBookingByMonth(CS_Id, firstDayOfMonth, lastDayOfMonth)
+
+        if (!result) {
+            return res.status(200).json(createResponse(-1, 'Không tìm thấy thống kê'));
+        }
+
+        return res.status(200).json(createResponse(0, 'Thống kê đặt bàn theo tháng thành công', result));
+
+    } catch (error) {
+        console.error('Lỗi khi tìm thống kê đặt bàn theo tháng', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi khi tìm thống kê đặt bàn theo tháng'));
+    }
+};
+
+const overViewBookingWithDay = async (req, res) => {
+
+    const { CS_Id, startDay, endDay, month, year } = req.body;
+
+    if (!CS_Id || !startDay || !endDay || !month || !year) {
+        return res.status(200).json(createResponse(-1, 'Vui lòng nhập đủ thông tin _'));
+    }
+    const firstDayOfMonth = new Date(year, month - 1, startDay + 1);
+    firstDayOfMonth.setHours(0, 0, 0, 0);
+
+    const lastDayOfMonth = new Date(year, month - 1, endDay + 1);
+    lastDayOfMonth.setHours(23, 59, 59, 999);
+
+    // console.log(firstDayOfMonth, lastDayOfMonth);
+
+    try {
+
+        const result = await storeServices.findOverViewBookingByMonth(CS_Id, firstDayOfMonth, lastDayOfMonth)
+
+        if (!result) {
+            return res.status(200).json(createResponse(-1, 'Không tìm thấy thống kê'));
+        }
+
+        return res.status(200).json(createResponse(0, 'Thống kê đặt bàn theo tháng thành công', result));
+
+
+    } catch (error) {
+        console.error('Lỗi khi tìm thống kê đặt bàn theo tháng', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi khi tìm thống kê đặt bàn theo tháng'));
+    }
+};
+
+
 //----------------------------------------------------Report------------------------------//
 
 const getAllReports = async (req, res) => {
@@ -343,6 +407,8 @@ module.exports = {
     lockStore,
     unlockStore,
     deleteStore,
+    overViewBooking,
+    overViewBookingWithDay,
     //Report
     getAllReports,
     changeStatusReport,

@@ -160,7 +160,7 @@ const getReserveTicketsToMonth = async (req, res) => {
     try {
 
         const { M_Id: managerId, month } = req.body;
-        const store = await storeServices.findCoffeeStoreById(managerId);
+        const store = await storeServices.findCoffeeStoreByIdManager(managerId);
 
         if (!store) {
             return res.status(200).json(createResponse(0, 'Không tìm thấy cửa hàng'));
@@ -187,9 +187,7 @@ const getReserveTicketsToDay = async (req, res) => {
         if (!managerId || !startDay || !endDay) {
             return res.status(200).json(createResponse(-1, 'Thiếu dữ liệu'));
         }
-
-        const store = await storeServices.findCoffeeStoreById(managerId);
-
+        const store = await storeServices.findCoffeeStoreByIdManager(managerId);
         if (!store) {
             return res.status(200).json(createResponse(0, 'Không tìm thấy cửa hàng'));
         }
@@ -239,7 +237,10 @@ const createCoffeeStore = async (req, res) => {
         CS_AcceptOnline: acceptOnline, CS_MaxPeople: maxPeople, CS_TimeOpen: timeOpen, CS_TimeClose: timeClose,
         CS_ListMenus: listMenu, CS_ListServices: listServices } = req.body;
 
-    if (!managerId || !name || !location || !acceptOnline || !detail || !listMenu || !listServices) {
+    console.log('listMenu,listServices', listMenu, listServices);
+
+    if (!managerId || !name || !listMenu || !listServices) {
+
         return res.status(200).json(createResponse(-1, 'Vui lòng nhập đủ thông tin'));
     }
 
@@ -401,6 +402,65 @@ const deleteHolidayOfCoffeeStore = async (req, res) => {
     }
 };
 
+const createLocationMaps = async (req, res) => {
+
+    const { location, M_Id: M_Id } = req.body;
+    // console.log('location', location);
+    // return res.status(200).json(createResponse(-1, 'Vui lòng nhập đủ thông tin'));
+    if (!location) {
+        return res.status(200).json(createResponse(-1, 'Vui lòng nhập đủ thông tin'));
+    }
+
+    try {
+
+        const coffeeStoreId = await storeServices.findIdCoffeeStoreByManagerId(M_Id);
+
+        if (!coffeeStoreId) { return res.status(200).json(createResponse(-1, 'Không tìm thấy id',)) }
+
+        let result = await storeServices.updateMapsCoffeeStore(JSON.stringify(location), coffeeStoreId)
+
+        if (result) {
+            return res.status(200).json(createResponse(0, 'cập nhật vị trí thành công', result))
+        }
+        return res.status(200).json(createResponse(1, 'Xóa vị trí không thành công', result))
+
+
+    } catch (error) {
+        console.error('Lỗi khi cập nhật vị trí', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi khi cập nhật vị trí'));
+    }
+};
+
+const getLocationMaps = async (req, res) => {
+
+    const { M_Id: M_Id } = req.body;
+    // console.log('location', location);
+    // return res.status(200).json(createResponse(-1, 'Vui lòng nhập đủ thông tin'));
+    if (!M_Id) {
+        return res.status(200).json(createResponse(-1, 'Vui lòng nhập đủ thông tin'));
+    }
+
+    try {
+
+        const coffeeStoreId = await storeServices.findIdCoffeeStoreByManagerId(M_Id);
+
+        if (!coffeeStoreId) { return res.status(200).json(createResponse(-1, 'Không tìm thấy id',)) }
+
+        let result = await storeServices.findMapsCoffeeStore(coffeeStoreId)
+
+        if (result) {
+            return res.status(200).json(createResponse(0, 'Tìm vị trí thành công', result))
+        }
+        return res.status(200).json(createResponse(1, 'Tìm vị trí không thành công', result))
+
+
+    } catch (error) {
+        console.error('Lỗi khi Tìmt vị trí', error);
+        return res.status(500).json(createResponse(-5, 'Lỗi khi Tìm vị trí'));
+    }
+};
+
+
 
 //---------------------------------------------------------Check in-----------------------------------------------------//
 const checkIn = async (req, res) => {
@@ -419,7 +479,7 @@ const checkIn = async (req, res) => {
     try {
         const timeDifferenceInMinutes = await userServices.checkTimeReserveTicket(RT_Id);
         const StatusByReserveTicket = await userServices.findLatestStatusByReserveTicketId(RT_Id);
-        const status = StatusByReserveTicket.SRT_Describe;
+        const status = StatusByReserveTicket ? StatusByReserveTicket.SRT_Describe : null;
         const timeCheckIn = await userServices.findTimeCreateLatestStatusByTicketId(RT_Id);
 
         // console.log('RT_Id', RT_Id, timeDifferenceInMinutes, status, timeCheckIn);
@@ -438,6 +498,9 @@ const checkIn = async (req, res) => {
             return res.status(200).json(createResponse(0, 'Bạn đã trễ hẹn', { detail, timeCheckIn }));
         }
 
+        if (status === 'Has Arrived') {
+            return res.status(200).json(createResponse(0, 'Bạn đã check in rồi', { detail, timeCheckIn }));
+        }
         let maxTimeDelay = 15;          // Thời gian giữa bàn cơ bản
         let user = await userServices.findUserByReserveTicketId(RT_Id)
         if (user.U_Id) {
@@ -449,14 +512,7 @@ const checkIn = async (req, res) => {
             return res.status(200).json(createResponse(0, 'Chưa đến hẹn', { detail, timeCheckIn: null }));
         }
 
-        if (timeDifferenceInMinutes < - maxTimeDelay) {
-            if (user) {
-                await userServices.changeExp(user.U_Id, -2)
-            }// Khách vãng lai thì k có
-            const timeCreate = await userServices.createStatusReserveTicket(RT_Id, 'Late');
-            return res.status(200).json(createResponse(0, 'Bạn đã trễ hẹn', { detail, timeCreate }));
-        }
-        if ((timeDifferenceInMinutes >= - maxTimeDelay || timeDifferenceInMinutes <= maxTimeDelay) && status === 'Waiting') {
+        if ((timeDifferenceInMinutes >= - maxTimeDelay && timeDifferenceInMinutes <= maxTimeDelay) && status === 'Waiting') {
             if (user) {
                 await userServices.changeExp(user.U_Id, +1)
             }// Khách vãng lai thì k có
@@ -464,7 +520,14 @@ const checkIn = async (req, res) => {
             return res.status(200).json(createResponse(0, 'Bạn đã check in thành công', { detail, timeCreate }));
         }
 
-        return res.status(200).json(createResponse(0, 'Bạn đã check in rồi', { detail, timeCheckIn }));
+        if (timeDifferenceInMinutes < - maxTimeDelay) {
+            if (user) {
+                await userServices.changeExp(user.U_Id, -2)
+            }// Khách vãng lai thì k có
+            const timeCreate = await userServices.createStatusReserveTicket(RT_Id, 'Late');
+            return res.status(200).json(createResponse(0, 'Bạn đã trễ hẹn', { detail, timeCreate }));
+        }
+
     } catch (error) {
         console.error('Lỗi khi check in người dùng', error);
         return res.status(500).json(createResponse(-5, 'Lỗi khi check in người dùng', null));
@@ -538,59 +601,29 @@ const checkStatusAllReserveTicketOfStore = async (req, res) => {
 };
 
 //-------------------------------------------------------Overview  ----------------------------------------------------//
-const overViewBooking = async (req, res) => {
-    const { M_Id: manager_Id, month } = req.body;
 
-    if (!manager_Id || !month) {
-        console.log(manager_Id, month);
-        return res.status(200).json(createResponse(-1, 'Vui lòng nhập đủ thông tin'));
+const overViewBookingWithDay = async (req, res) => {
+
+    const { M_Id: manager_Id, startDay, endDay, month, year } = req.body;
+
+    if (!manager_Id || !startDay || !endDay || !month || !year) {
+        return res.status(200).json(createResponse(-1, 'Vui lòng nhập đủ thông tin _'));
     }
+    const firstDayOfMonth = new Date(year, month - 1, startDay + 1);
+    firstDayOfMonth.setHours(0, 0, 0, 0);
+
+    const lastDayOfMonth = new Date(year, month - 1, endDay + 1);
+    lastDayOfMonth.setHours(23, 59, 59, 999);
+
+    console.log(firstDayOfMonth, lastDayOfMonth);
 
     try {
-
-        const firstDayOfMonth = new Date(new Date().getFullYear(), month - 1, 2);
-        firstDayOfMonth.setHours(0, 0, 0, 0);
-        const lastDayOfMonth = new Date(new Date().getFullYear(), month, 1);
-        lastDayOfMonth.setHours(23, 59, 59, 999);
-
-        // console.log('firstDayOfMonth - lastDayOfMonth', firstDayOfMonth, lastDayOfMonth);
 
         let Coffee_Store_Id = await storeServices.findIdCoffeeStoreByManagerId(manager_Id)
 
         if (Coffee_Store_Id) {
 
             const result = await storeServices.findOverViewBookingByMonth(Coffee_Store_Id, firstDayOfMonth, lastDayOfMonth)
-
-            if (!result) {
-                return res.status(200).json(createResponse(-1, 'Không tìm thấy thống kê'));
-            }
-
-            return res.status(200).json(createResponse(0, 'Thống kê đặt bàn theo tháng thành công', result));
-
-        } else {
-            return res.status(200).json(createResponse(-1, 'Không tìm thấy id cửa hàng'));
-        }
-
-    } catch (error) {
-        console.error('Lỗi khi tìm thống kê đặt bàn theo tháng', error);
-        return res.status(500).json(createResponse(-5, 'Lỗi khi tìm thống kê đặt bàn theo tháng'));
-    }
-};
-
-const overViewBookingWithDay = async (req, res) => {
-    const { M_Id: manager_Id, startDay, endDay } = req.body;
-
-    if (!manager_Id || !startDay || !endDay) {
-        return res.status(200).json(createResponse(-1, 'Vui lòng nhập đủ thông tin'));
-    }
-
-    try {
-
-        let Coffee_Store_Id = await storeServices.findIdCoffeeStoreByManagerId(manager_Id)
-
-        if (Coffee_Store_Id) {
-
-            const result = await storeServices.findOverViewBookingByMonth(Coffee_Store_Id, startDay, endDay)
 
             if (!result) {
                 return res.status(200).json(createResponse(-1, 'Không tìm thấy thống kê'));
@@ -630,12 +663,14 @@ module.exports = {
     deleteImageBanner,
     deleteHolidayOfCoffeeStore,
 
+    createLocationMaps,
+    getLocationMaps,
+
     //Check in
     checkIn,
     historyCheckIn,
     checkStatusAllReserveTicketOfStore,
 
     //Overview
-    overViewBooking,
     overViewBookingWithDay
 }

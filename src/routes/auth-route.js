@@ -1,6 +1,7 @@
 import express from "express";
 import {
     loginUser,
+    loginUserWithGoogle,
     loginManager,
     registerUser,
     registerManager,
@@ -13,6 +14,7 @@ import {
 function initAuthRoutes() {
     let router = express.Router();
     router.get('/logout', logOut)
+    router.post('/login-user-google', loginUserWithGoogle);
     router.post('/login-user', loginUser);
     router.post('/login-manager', loginManager);
     router.post('/register-user', registerUser);

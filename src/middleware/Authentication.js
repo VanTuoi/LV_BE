@@ -31,6 +31,7 @@ const createJWTChangePassword = (id) => {
 
 const verifyTokenUser = async (req, res, next) => {
     try {
+
         const key = process.env.JWT_SECRET;
         const token = req.cookies.Jwt;
 
@@ -59,7 +60,7 @@ const verifyTokenUser = async (req, res, next) => {
             where: { U_Id: decodedToken.data.Id },
             order: [['createdAt', 'DESC']],
         });
-        if (status.SU_Describe === 'Lock') {
+        if (status && status.SU_Describe === 'Lock') {
             res.cookie("Jwt", '', { maxAge: 2 })        // Xóa token
             return res.status(200).json(createResponse(-6, 'Tài khoản của bạn đã bị khóa', null));
         }
@@ -71,7 +72,7 @@ const verifyTokenUser = async (req, res, next) => {
         req.body.U_Id = decodedToken.data.Id;
         next();
     } catch (error) {
-        // Xử lý lỗi một cách an toàn
+        // Xử lý lỗi một cách an toàn 
         console.error('Lỗi khi xác minh mã JWT:', error);
         res.cookie("Jwt", '', { maxAge: 2 })        // Xóa token
         return res.status(200).json(createResponse(-3, 'Token không hợp lệ', null));

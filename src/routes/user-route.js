@@ -29,6 +29,8 @@ import {
     changeReport,
     deleteReport,
 
+    payment,
+
 } from '../controllers/user-controller';
 
 function initUserRoutes() {
@@ -65,6 +67,9 @@ function initUserRoutes() {
     router.post('/get-all-reports', getAllReports);
     router.post('/change-report', changeReport);
     router.post('/delete-report', deleteReport);
+
+    // payment
+    router.post('/payment', payment);
 
     return router;
 }

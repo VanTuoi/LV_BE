@@ -19,6 +19,18 @@ const comparePassword = async (inputPassword, hashedPassword) => {
 };
 
 //---------------------------------------------User--------------------------------------//
+const findUserByIdGoogle = async (id) => {
+    try {
+        let have = await db.User.findOne({
+            where: { U_Id_Google: id }
+        })
+        return have ? have : null
+    } catch (error) {
+        console.log('Error find Phone user', error);
+        return null
+    }
+};
+
 const findPhoneUser = async (phone) => {
     try {
         let havePhone = await db.User.findOne({
@@ -112,6 +124,22 @@ const createUser = async (name, email, phone, password, gender, birthday, score)
             U_Gender: gender,
             U_Birthday: birthday,
             U_PrestigeScore: score,
+        });
+        return newRecord;
+    } catch (error) {
+        console.log('Error create User', error);
+        return null
+    }
+};
+
+const createUserWithGoogle = async (name, U_Avatar, email) => {
+    try {
+        const newRecord = await db.User.create({
+            U_Name: name,
+            U_Email: email,
+            U_Avatar: U_Avatar,
+            U_Gender: 'M',
+            U_PrestigeScore: 0,
         });
         return newRecord;
     } catch (error) {
@@ -229,12 +257,14 @@ module.exports = {
     comparePassword,
 
     // User
+    findUserByIdGoogle,
     findPhoneUser,
     findEmailUser,
     findUserByEmail,
     findPasswordOfUserByPhone,
     findLatestStatusByUserId,
     createUser,
+    createUserWithGoogle,
     createStatusUser,
 
     // Manager

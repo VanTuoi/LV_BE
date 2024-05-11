@@ -15,9 +15,6 @@ module.exports = (sequelize, DataTypes) => {
       Coffee_Store.hasMany(models.Menus, {
         foreignKey: 'CS_Id',
       })
-      Coffee_Store.hasMany(models.Tags, {
-        foreignKey: 'CS_Id',
-      })
       Coffee_Store.hasMany(models.Services, {
         foreignKey: 'CS_Id',
       })
@@ -62,6 +59,9 @@ module.exports = (sequelize, DataTypes) => {
       validate: {
         len: [0, 200]
       }
+    },
+    CS_Maps: {
+      type: DataTypes.STRING,
     },
     CS_Detail: {
       type: DataTypes.STRING,
