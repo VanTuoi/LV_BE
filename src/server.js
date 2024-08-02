@@ -30,5 +30,5 @@ initWebRoutes(app);
 connection();
 
 app.listen(PORT, () => {
-    console.log('Services Store run in port ' + PORT)
+    console.log('Application run in port ' + PORT)
 })
